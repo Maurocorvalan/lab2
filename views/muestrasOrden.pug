@@ -1,0 +1,56 @@
+extends layout
+
+block content
+  h1 Muestras de la Orden #{id_orden}
+
+  if muestras
+    .row.row-cols-1.row-cols-md-3
+      each muestra in muestras
+        .col.mb-4
+          .card
+            .card-body
+              ul.list-unstyled
+                li Id Muestra: #{muestra.id_Muestra}
+                li Id Orden: #{muestra.id_Orden}
+                li Id Paciente: #{muestra.id_Paciente}
+                li Nombre Paciente: #{muestra.Paciente.nombre} #{muestra.Paciente.apellido}
+                li Tipo de Muestra: #{muestra.Tipo_Muestra}
+                li Fecha de Recepción: #{muestra.Fecha_Recepcion ? muestra.Fecha_Recepcion.toLocaleString('es-AR') : ''}
+                li Estado: #{muestra.estado}
+              a.btn.btn-primary.btn-padding-right(href=`/muestras/mostrar/aniadirResultados/${muestra.id_Muestra}`) Añadir Resultados
+              a.btn.btn-secondary.btn-padding-right(href="") Modificar Muestra
+              button.btn.btn-success.btn-padding-right(type="button", onclick=`generarPDF('${muestra.id_Muestra}', '${id_orden}')`) Imprimir
+  else
+    p #{mensaje}
+  h1 Validar Orden de trabajo
+
+  script.
+    async function generarPDF(idMuestra, idOrden) {
+      try {
+        const info = await fetch(`/muestras/${idOrden}/generarPDFMuestra/${idMuestra}`);
+        if (!info.ok) {
+          throw new Error(`HTTP error! Status: ${info.status}`);
+        }
+
+        const { pdfBase64 } = await info.json();
+
+        // Crear un objeto blob desde el PDF base64
+        const byteCharacters = atob(pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        // Crear una URL del blob para mostrar el PDF en el navegador
+        const url = URL.createObjectURL(blob);
+
+        // Abrir una nueva ventana o mostrar el PDF en un iframe
+        window.open(url, '_blank');
+
+      } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert('Error al generar PDF.');
+      }
+    }

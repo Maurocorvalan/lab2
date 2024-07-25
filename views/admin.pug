@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  head
+    title Administrador
+
+  div.container
+    h1 Bienvenido #{nombreUsuario}
+    div.row.mt-5
+      div.col
+        a(href="/admin/crear-usuario" class="btn btn-primary") Crear Usuario
+      div.col
+        a(href="/admin/actualizarUsuarioAdm" class="btn btn-success") Actualizar Usuario

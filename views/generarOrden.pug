@@ -1,0 +1,157 @@
+extends layout
+
+block content
+  head
+    title Generación de Orden de Trabajo
+
+  body
+    .container
+      h1.mb-4 Generación de Orden de Trabajo
+      form#generar-orden-form(action="/orden/generacion-orden" method="POST")
+        .form-group
+          label(for="paciente") Paciente:
+          input#pacienteSearch.form-control(type="text" placeholder="Buscar paciente...")
+          #pacienteResults
+          input#selectedPaciente(name="id_paciente" type="hidden")
+          input#selectedPacienteDNI(name="dni_paciente" type="hidden")
+          p Paciente seleccionado:
+
+          #selectedPacienteContainer
+            p#selectedPacienteLabel
+            button#clearPacienteButton.btn.btn-secondary(type="button") Borrar
+        .form-group
+          label(for="estado") Estado de la Orden:
+          select#estado.form-control(name="estado")
+            option(value="ingresada") Ingresada
+            option(value="esperando_toma_muestra") Esperando Toma de Muestra
+            option(value="analitica") Analítica
+        .form-group
+          label(for="examenes") Exámenes:
+          input#examSearch.form-control(type="text" placeholder="Buscar exámenes...")
+          #examResults
+          label(for="examenes") Examenes seleccionados:
+          select#examenesSelect.form-control(name="examenesSelect", multiple)
+          input#examenesSelectedIds(name="examenesSelectedIds" type="hidden")
+          p  Doble click para deseleccionar examenes
+
+        .form-group
+          .form-check 
+            label(for="tiposMuestra") Tipos de Muestra:
+            each tipo in tiposMuestra
+              .form-check
+                input.form-check-input(type="checkbox" name="tipos_muestra", value=tipo.value, id=tipo.value)
+                label.form-check-label(for=tipo.value)= tipo.label
+                br
+              select.form-control(name="estado_" + tipo.value)
+                option(value="esperando_toma_muestra") Esperando Toma de Muestra
+                option(value="analitica") Analítica
+                option(value="faltante-de-muestra") Faltante de muestra
+
+
+        button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Generar Orden de Trabajo
+
+    script.
+      // JavaScript para manejar la búsqueda, selección y eliminación de exámenes
+      const examSearchInput = document.getElementById("examSearch");
+      const examResults = document.getElementById("examResults");
+      const selectedExams = document.getElementById("examenesSelect");
+
+      // Lista de todos los exámenes (recibidos desde el servidor)
+      const examenes = !{JSON.stringify(examenes)};
+
+      examSearchInput.addEventListener("input", () => {
+        const searchTerm = examSearchInput.value.toLowerCase();
+        const filteredExams = examenes.filter(examen => {
+          return examen.nombre_examen.toLowerCase().includes(searchTerm) || examen.codigo.toLowerCase().includes(searchTerm);
+        });
+
+        // Limpiar resultados anteriores
+        examResults.innerHTML = "";
+
+        filteredExams.forEach(examen => {
+          const option = document.createElement("option");
+          option.value = examen.id_examen;
+          option.textContent = `${examen.nombre_examen} (Código: ${examen.codigo}, ID: ${examen.id_examen})`;
+          examResults.appendChild(option);
+        });
+      });
+
+      // Manejar la selección de exámenes
+      examResults.addEventListener("click", (event) => {
+        if (event.target.tagName === "OPTION") {
+          const selectedOption = event.target;
+          selectedExams.appendChild(selectedOption);
+          updateSelectedExamIds();
+        }
+      });
+
+      // Manejar la eliminación de exámenes al hacer doble clic
+      selectedExams.addEventListener("dblclick", (event) => {
+        if (event.target.tagName === "OPTION") {
+          const removedOption = event.target;
+          removedOption.remove();
+          updateSelectedExamIds();
+        }
+      });
+
+      // Función para actualizar los IDs de exámenes seleccionados
+      function updateSelectedExamIds() {
+        const selectedOptions = selectedExams.querySelectorAll("option");
+        const selectedIds = Array.from(selectedOptions).map(option => option.value).join(",");
+        document.getElementById("examenesSelectedIds").value = selectedIds;
+      }
+
+      // JavaScript para manejar la búsqueda en tiempo real de pacientes
+      const pacienteSearchInput = document.getElementById("pacienteSearch");
+      const pacienteResults = document.getElementById("pacienteResults");
+      const selectedPaciente = document.getElementById("selectedPaciente");
+      const selectedPacienteLabel = document.getElementById("selectedPacienteLabel");
+      const selectedPacienteContainer = document.getElementById("selectedPacienteContainer");
+      const clearPacienteButton = document.getElementById("clearPacienteButton");
+
+      // Lista de todos los pacientes (recibidos desde el servidor)
+      const pacientes = !{JSON.stringify(pacientes)};
+
+      pacienteSearchInput.addEventListener("input", () => {
+        const searchTerm = pacienteSearchInput.value.toLowerCase();
+        const filteredPacientes = pacientes.filter(paciente => {
+          return paciente.nombre.toLowerCase().includes(searchTerm) || paciente.apellido.toLowerCase().includes(searchTerm) || paciente.dni.toLowerCase().includes(searchTerm);
+        });
+
+        // Limpiar resultados anteriores
+        pacienteResults.innerHTML = "";
+
+        filteredPacientes.forEach(paciente => {
+          const option = document.createElement("option");
+          option.value = paciente.id_paciente;
+          option.textContent = `${paciente.nombre} ${paciente.apellido} (DNI: ${paciente.dni}, id: ${paciente.id_paciente})`;
+          pacienteResults.appendChild(option);
+        });
+      });
+
+      // Manejar la selección de pacientes
+
+      pacienteResults.addEventListener("click", (event) => {
+        if (event.target.tagName === "OPTION") {
+          const selectedOption = event.target;
+          selectedPaciente.value = selectedOption.value;
+          selectedPacienteDNI.value = selectedOption.textContent.match(/\(DNI: ([0-9]+),/)[1]; // Extraer el DNI del texto
+          selectedPacienteLabel.textContent = selectedOption.textContent;
+          selectedPacienteContainer.style.display = "block";
+          pacienteSearchInput.value = ""; // Limpiar el campo de búsqueda
+        }
+      });
+
+      // Manejar la eliminación de pacientes al hacer clic en el botón "Borrar"
+      clearPacienteButton.addEventListener("click", () => {
+        selectedPaciente.value = "";
+        selectedPacienteLabel.textContent = "";
+        selectedPacienteContainer.style.display = "none";
+      });
+
+      // Ocultar la lista de resultados cuando se hace clic fuera del campo de búsqueda
+      document.addEventListener("click", (event) => {
+        if (event.target !== pacienteSearchInput && event.target !== pacienteResults) {
+          pacienteResults.innerHTML = "";
+        }
+      });

@@ -1,0 +1,167 @@
+extends layout
+
+block content
+  head
+    title Actualizar orden de trabajo
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css")
+
+  h1 Modificar Orden de Trabajo
+
+  // Formulario de creación/modificación de órdenes de trabajo
+  form(action=`/buscarOrdenes/crear-modificar-orden/${ordenTrabajoExistente.id_Orden}`, method="POST")
+    .form-group
+      label(for="idPaciente") ID del Paciente:
+      input(type="text", name="idPaciente", value=ordenTrabajoExistente.id_Paciente, class="form-control", readonly)
+
+    .form-group
+      label(for="Fecha_Creacion") Fecha de Creación:
+      input(type="text", id="Fecha_Creacion", name="Fecha_Creacion", value=ordenTrabajoExistente.Fecha_Creacion, class="form-control", required)
+
+    // Mostrar el estado actual de la orden de trabajo
+    .form-group
+      label(for="estado") Estado de la Orden:
+      select#estado.form-control(name="estado")
+        //- Opción para estado "Ingresada"
+        if estadoOrden === 'ingresada'
+          option(value="ingresada", selected) Ingresada
+        else
+          option(value="ingresada") Ingresada
+
+        //- Opción para estado "Esperando Toma de Muestra"
+        if estadoOrden === 'esperando_toma_muestra'
+          option(value="esperando_toma_muestra", selected) Esperando Toma de Muestra
+        else
+          option(value="esperando_toma_muestra") Esperando Toma de Muestra
+
+        //- Opción para estado "Analítica"
+        if estadoOrden === 'analitica'
+          option(value="analitica", selected) Analítica
+        else
+          option(value="analitica") Analítica
+
+        //- Opción para estado "Cancelada"
+        if estadoOrden === 'cancelada'
+          option(value="cancelada", selected) Cancelada
+        else
+          option(value="cancelada") Cancelada
+
+    // Órdenes de Exámenes Asociadas
+    h2 Exámenes Asociados
+    if ordenTrabajoExistente.ordenes_examenes && ordenTrabajoExistente.ordenes_examenes.length > 0
+      .d-flex.flex-wrap
+        each examen in ordenTrabajoExistente.ordenes_examenes
+          .m-2.p-2.border.card(style="width: 250px; height: 200px; background-color: #EEEEEE; border-radius: 20px;")
+            label(for=`examen_${examen.id_examen}`) Nombre del Examen:
+            input(type="text", name=`examen_${examen.id_examen}`, value=examen.Examen.nombre_examen, class="form-control", readonly)
+            label(for=`codigoExamen_${examen.id_examen}`) Código del Examen:
+            input(type="text", name=`codigoExamen_${examen.id_examen}`, value=examen.Examen.codigo, class="form-control", readonly)
+    else
+      p No se encontraron exámenes asociados a esta orden de trabajo.
+
+    // Código para la gestión de exámenes
+    .form-group
+      label(for="examenes") Agregar exámenes:
+      input#examSearch.form-control(type="text", placeholder="Buscar exámenes...")
+      #examResults
+      label(for="examenesSelect") Exámenes seleccionados:
+      select#examenesSelect.form-control(name="examenesSelect", multiple)
+      input#examenesSelectedIds(type="hidden", name="examenesSelectedIds")
+
+    // Muestras Asociadas
+    h2 Muestras Asociadas
+    if ordenTrabajoExistente.Muestras && ordenTrabajoExistente.Muestras.length > 0
+      .d-flex.flex-wrap
+        each muestra in ordenTrabajoExistente.Muestras
+          .m-2.p-2.border.card(style="width: 250px; height: 240px; background-color: #EEEEEE; border-radius: 20px;")
+            label(for=`tipoMuestra_${muestra.id_Muestra}`) Tipo de Muestra:
+            input(type="text", name=`tipoMuestra_${muestra.id_Muestra}`, value=muestra.Tipo_Muestra, class="form-control", readonly)
+            label(for=`estadoMuestra_${muestra.id_Muestra}`) Estado de Muestra:
+            select.form-control(name=`estadoMuestra_${muestra.id_Muestra}`, readonly)
+              option(value="analitica", selected=muestra.estado === 'analitica') Analítica
+              option(value="esperando_toma_muestra", selected=muestra.estado === 'esperando_toma_muestra') Esperando Toma de Muestra
+            label(for=`fechaRecoleccion_${muestra.id_Muestra}`) Fecha de Recolección:
+            - const formattedDate = muestra.Fecha_Recepcion ? new Date(muestra.Fecha_Recepcion).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+            input(type="text", name=`fechaRecoleccion_${muestra.id_Muestra}`, value=formattedDate, class="form-control", readonly)
+    else
+      p No se encontraron muestras asociadas a esta orden de trabajo.
+
+    .form-group
+      h2 Agregar nuevas muestras.
+      label Tipos de Muestra:
+      each tipo in tiposMuestra
+        .form-check
+          input.form-check-input(type="checkbox", name="tipos_muestra", value=tipo.value, id=tipo.value)
+          label.form-check-label(for=tipo.value)= tipo.label
+          select.form-control(name=`estado_${tipo.value}`)
+            option(value="esperando_toma_muestra") Esperando Toma de Muestra
+            option(value="analitica") Analítica
+
+    // Botón para guardar la orden de trabajo
+    button(type="submit", class="btn btn-primary", onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Guardar Orden de Trabajo
+    a(href=`/buscarOrdenes/cancelar-orden/${ordenTrabajoExistente.id_Orden}`, class="btn btn-danger") Cancelar Orden
+
+  // Incluir scripts de flatpickr al final del documento para asegurar que el DOM esté cargado
+  script(src="https://cdn.jsdelivr.net/npm/flatpickr")
+
+  script.
+    // JavaScript para manejar la búsqueda, selección y eliminación de exámenes
+    const examSearchInput = document.getElementById("examSearch");
+    const examResults = document.getElementById("examResults");
+    const selectedExams = document.getElementById("examenesSelect");
+
+    // Lista de todos los exámenes (recibidos desde el servidor)
+    const examenes = !{JSON.stringify(examenes)};
+
+    examSearchInput.addEventListener("input", () => {
+      const searchTerm = examSearchInput.value.trim().toLowerCase(); // Obtener el término de búsqueda y limpiar espacios
+
+      // Filtrar los exámenes solo si hay un término de búsqueda presente
+      if (searchTerm) {
+        const filteredExams = examenes.filter(examen => {
+          return examen.nombre_examen.toLowerCase().includes(searchTerm) || examen.codigo.toLowerCase().includes(searchTerm);
+        });
+
+        // Mostrar resultados filtrados
+        examResults.innerHTML = "";
+        filteredExams.forEach(examen => {
+          const option = document.createElement("option");
+          option.value = examen.id_examen;
+          option.textContent = `${examen.nombre_examen} (Código: ${examen.codigo}, ID: ${examen.id_examen})`;
+          examResults.appendChild(option);
+        });
+      } else {
+        // Si no hay término de búsqueda, limpiar los resultados
+        examResults.innerHTML = "";
+      }
+    });
+
+    // Manejar la selección de exámenes
+    examResults.addEventListener("click", (event) => {
+      if (event.target.tagName === "OPTION") {
+        const selectedOption = event.target;
+        selectedExams.appendChild(selectedOption);
+        updateSelectedExamIds();
+      }
+    });
+
+    // Manejar la eliminación de exámenes al hacer doble clic
+    selectedExams.addEventListener("dblclick", (event) => {
+      if (event.target.tagName === "OPTION") {
+        const removedOption = event.target;
+        removedOption.remove();
+        updateSelectedExamIds();
+      }
+    });
+
+    // Función para actualizar los IDs de exámenes seleccionados
+    function updateSelectedExamIds() {
+      const selectedOptions = selectedExams.querySelectorAll("option");
+      const selectedIds = Array.from(selectedOptions).map(option => option.value).join(",");
+      document.getElementById("examenesSelectedIds").value = selectedIds;
+    }
+
+    // JavaScript para inicializar Flatpickr en el campo de Fecha de Creación
+    flatpickr("#Fecha_Creacion", {
+      enableTime: true,
+      dateFormat: "d-m-Y H:i",
+    });

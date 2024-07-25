@@ -1,0 +1,22 @@
+
+block content
+  head
+    title Iniciar Sesión
+    link(rel="icon" href="/public/img/icon.png" type="image/png")
+    link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css")
+  body
+    nav.navbar.navbar-expand-lg.navbar-light.bg-light
+      h4.mb-4.mr-auto Laboratorio
+  .container
+    h1(class="mt-5 text-center") Iniciar Sesión
+    form(class="mt-3" action='/login' method='POST')
+      .form-group
+        label(for='correo_electronico') Correo Electrónico
+        input(type='text' name='correo_electronico' id='correo_electronico' class='form-control', required)
+      .form-group
+        label(for='password') Contraseña
+        input(type='password' name='password' id='password' class='form-control', required)
+      .text-center
+        button(type='submit' class='btn btn-primary mt-3') Iniciar Sesión
+    if message
+      p(class='error-message text-center mt-3')= message

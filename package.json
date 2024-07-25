@@ -1,0 +1,48 @@
+{
+  "name": "tp-laboratorio2",
+  "version": "1.0.0",
+  "description": "Proyecto Integrador Laboratorio 2",
+  "main": "app.js",
+  "scripts": {
+    "start": "node /app.js",
+    "dev": "nodemon /app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juancurrenti/tp-laboratorio2.git"
+  },
+  "author": "maurocorvaa@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/juancurrenti/tp-laboratorio2/issues"
+  },
+  "homepage": "https://github.com/juancurrenti/tp-laboratorio2#readme",
+  "dependencies": {
+    "axios": "^1.5.1",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "connect-ensure-login": "^0.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-handlebars": "^7.1.2",
+    "express-myconnection": "^1.0.4",
+    "express-session": "^1.17.3",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.6.2",
+    "node": "^21.2.0",
+    "nodemon": "^3.1.0",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "path": "^0.12.7",
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.15.0",
+    "pug": "^3.0.2",
+    "sequelize": "^6.33.0",
+    "sequelize-cli": "^6.6.1"
+  }
+}

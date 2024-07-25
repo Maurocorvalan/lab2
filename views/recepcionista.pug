@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  head
+    title Recepcionista
+
+  body
+    .container
+      h1(class="mt-5 text-center") Bienvenido #{nombreUsuario}
+
+      // Paciente
+      .row
+        .col-lg-12
+          h2 Pacientes
+          a(href="/buscar-paciente" class="btn btn-primary btn-block mt-3") Registrar/Buscar Paciente
+
+      // Órdenes
+      .row
+        .col-lg-12
+          h2 Órdenes
+          a(href="/orden/generacion-orden" class="btn btn-primary btn-block mt-3") Generar Orden
+
+      .row
+        .col-lg-12
+          a(href="/BuscarOrdenes/ordenes" class="btn btn-primary btn-block mt-3") Actualizar Orden

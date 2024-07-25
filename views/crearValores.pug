@@ -1,0 +1,31 @@
+extends layout
+
+block content
+  head
+    title Crear Valores de Referencia
+  body
+    h1 Crear Valores de Referencia
+    form#crear-valores-form(action="/valoresreferencia/crear-valores" method="POST")
+      div.form-group
+        label(for="id_Determinacion") Determinación:
+        select#id_Determinacion(name="id_Determinacion" class="form-control" required)
+          each determinacion in determinaciones
+            option(value=determinacion.id_Determinacion) #{determinacion.Nombre_Determinacion}
+      div.form-group
+        label(for="Edad_Minima") Edad Mínima:
+        input#Edad_Minima(type="number" name="Edad_Minima" class="form-control" required)
+      div.form-group
+        label(for="Edad_Maxima") Edad Máxima:
+        input#Edad_Maxima(type="number" name="Edad_Maxima" class="form-control" required)
+      div.form-group
+        label(for="Sexo") Sexo:
+        select#Sexo(name="Sexo" class="form-control" required)
+          option(value="M") Masculino
+          option(value="F") Femenino
+      div.form-group
+        label(for="Valor_Referencia_Minimo") Valor Mínimo:
+        input#Valor_Referencia_Minimo(type="number" step="0.01" name="Valor_Referencia_Minimo" class="form-control" required)
+      div.form-group
+        label(for="Valor_Referencia_Maximo") Valor Máximo:
+        input#Valor_Referencia_Maximo(type="number" step="0.01" name="Valor_Referencia_Maximo" class="form-control" required)
+      button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear el valor de referebcua?')") Crear Valores de Referencia

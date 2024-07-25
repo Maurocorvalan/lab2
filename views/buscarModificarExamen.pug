@@ -1,0 +1,47 @@
+extends layout
+
+block content
+  head
+    title Buscar y Modificar Examen
+  h1 Buscar y Modificar Examen
+
+  div.container
+    form(action="/modificar-examen/buscar-modificar-examen" method="post" class="mb-4")
+      div.form-group
+        label(for="codigo") Codigo del Examen:
+        input(type="text" name="codigo", required, class="form-control")
+      button(type="submit" class="btn btn-primary") Buscar Examen
+
+    if examen
+      h2 Examen Encontrado
+
+      .card(style="width: 18rem;, background-color:#EEEEEE")
+        .card-body
+          h5.card-title ID: #{examen.id_examen}
+          p.card-text Nombre: #{examen.nombre_examen}
+          p.card-text Descripción: #{examen.descripcion}
+          p.card-text Código: #{examen.codigo}
+          p.card-text Estado: #{examen.estado ? 'Activo' : 'Inactivo'}
+
+
+      form(action="/modificar-examen/modificar" method="post" class="mt-4")
+        input(type="hidden" name="id_examen", value=examen.id_examen)
+        div.form-group
+          label(for="nombre_examen") Nuevo Nombre del Examen:
+          input(type="text" name="nombre_examen", value=examen.nombre_examen, required, class="form-control")
+
+        div.form-group
+          label(for="descripcion") Nueva Descripción del Examen:
+          textarea(name="descripcion" rows="3" class="form-control") #{examen.descripcion}
+
+        div.form-group
+          label(for="codigo") Nuevo Código del Examen:
+          input(type="text" name="codigo", value=examen.codigo, required, class="form-control")
+
+        div.form-group
+          label(for="estado") Estado:
+          select(name="estado" class="form-control")
+            option(value="1", selected=examen.estado === 1) Activo
+            option(value="0", selected=examen.estado === 0) Inactivo
+
+        button(type="submit" class="btn btn-primary" onclick="return confirm('¿Estás seguro de modificar el examen?')") Modificar Examen

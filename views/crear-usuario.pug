@@ -1,0 +1,32 @@
+extends layout
+
+block content
+  head
+    title Crear Usuario
+  body
+    h1 Crear Usuario
+    form#crear-usuario-form(action="/admin/crear-usuario" method="POST")
+      div.form-group
+        label(for="nombre") Nombre:
+        input#nombre(type="text" name="nombre" class="form-control")
+      div.form-group
+        label(for="correo_electronico" ) Correo Electrónico:
+        input#correo_electronico(type="email" name="correo_electronico" class="form-control")
+      div.form-group
+        label(for="password") Contraseña:
+        input#password(type="password" name="password" class="form-control")
+      div.form-group
+        label(for="rol") Rol:
+        select#rol(name="rol" class="form-control")
+          option(value="recepcionista") Recepcionista
+          option(value="tecnico") Técnico
+          option(value="bioquimico") Bioquímico
+          option(value="admin") Administrador
+          option(value="admin") Paciente
+
+      button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear el usuario?')") Crear Usuario
+
+      if mensaje
+        p(style="color: green;") #{mensaje}
+      if error
+        p(style="color: red;") #{error}
