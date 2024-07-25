@@ -26,13 +26,21 @@ const Resultado = sequelize.define(
         key: "id_Determinacion",
       },
     },
-    valor_final:{
+    id_Orden: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: "ordenes_trabajo",
+        key: "id_Orden",
+      },
+    },
+    valor_final: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    fecha_resultado:{
+    fecha_resultado: {
       type: DataTypes.DATE,
-    }
+    },
   },
   {
     tableName: "resultados",
