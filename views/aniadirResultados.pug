@@ -14,6 +14,21 @@ block content
     .form-group
       label(for="valor_final") Valor Final
       input#valor_final.form-control(type="text" name="valor_final" required)
+      label(for="unidad_medida") Unidad de Medida
+      select#unidad_medida.form-control(name="unidad_medida" required, oninput="customUnitInputCheck()")
+        option(value="") -- Seleccionar Unidad de Medida --
+        option(value="mg/dL") mg/dL
+        option(value="mmol/L") mmol/L
+        option(value="g/dL") g/dL
+        option(value="UI/L") UI/L
+        option(value="%") %
+        option(value="µg/L") µg/L
+        option(value="ng/mL") ng/mL
+        option(value="pg/mL") pg/mL
+        option(value="mEq/L") mEq/L
+        option(value="mg/L") mg/L
+        option(value="custom") Otra (Ingresar manualmente)
+      input#custom_unidad_medida.form-control(type="text" name="custom_unidad_medida" placeholder="Ingresar unidad de medida" style="display:none;")
 
     button.btn.btn-primary(type="submit") Guardar Resultado
     a.btn.btn-secondary(href=`/muestras/mostrar/${muestra.id_Orden}`) Cancelar
@@ -66,3 +81,16 @@ block content
         document.querySelector('#valoresReferenciaTable tbody').innerHTML = '';
       }
     });
+
+    function customUnitInputCheck() {
+      const unidadMedidaSelect = document.getElementById('unidad_medida');
+      const customUnidadMedidaInput = document.getElementById('custom_unidad_medida');
+      if (unidadMedidaSelect.value === 'custom') {
+        customUnidadMedidaInput.style.display = 'block';
+        customUnidadMedidaInput.required = true;
+      } else {
+        customUnidadMedidaInput.style.display = 'none';
+        customUnidadMedidaInput.required = false;
+        customUnidadMedidaInput.value = ''; // Clear custom input when hidden
+      }
+    }

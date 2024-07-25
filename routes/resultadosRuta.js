@@ -140,20 +140,29 @@ router.get('/mostrar/aniadirResultados/:id_muestra/valoresReferencia/:id_determi
 // Ruta para añadir un resultado
 router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
   const id_muestra = req.params.id_muestra;
-  const { id_determinacion, valor_final } = req.body;
+  const { id_determinacion, valor_final, unidad_medida, custom_unidad_medida } = req.body;
 
   try {
+    // Determinar la unidad de medida a usar
+    const unidadMedida = unidad_medida === 'custom' ? custom_unidad_medida : unidad_medida;
+
+    // Concatenar valor_final con unidad de medida
+    const valorFinalConUnidad = unidadMedida ? `${valor_final} ${unidadMedida}` : valor_final;
+    // Obtener id_Orden desde la muestra
+    const muestra = await Muestra.findByPk(id_muestra);
+    const id_Orden = muestra.id_Orden; // Captura id_Orden
+    console.log("aca esta el id de la orden: "+id_Orden);
     // Crear un nuevo resultado
     await Resultado.create({
       id_Muestra: id_muestra,
       id_determinacion,
-      valor_final,
+      valor_final: valorFinalConUnidad,
+      id_Orden,
       fecha_resultado: new Date()
+      
     });
 
-    // Obtener id_Orden desde la muestra
-    const muestra = await Muestra.findByPk(id_muestra);
-    const id_Orden = muestra.id_Orden; // Captura id_Orden
+
 
     res.redirect(`/muestras/mostrar/${id_Orden}`); // Redirige a la vista de muestras
   } catch (error) {

@@ -97,7 +97,7 @@ block content
             option(value="analitica") Analítica
 
     // Botón para guardar la orden de trabajo
-    button(type="submit", class="btn btn-primary", onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Guardar Orden de Trabajo
+    button.btn-primary.btn-padding-right(type="submit", class="btn btn-primary", onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Guardar Orden de Trabajo
     a(href=`/buscarOrdenes/cancelar-orden/${ordenTrabajoExistente.id_Orden}`, class="btn btn-danger") Cancelar Orden
 
   // Incluir scripts de flatpickr al final del documento para asegurar que el DOM esté cargado
