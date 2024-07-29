@@ -1,0 +1,42 @@
+extends layout
+
+block content
+  h1 Detalle de Orden
+  table
+    thead
+      tr
+        th ID Orden
+        th ID Paciente
+        th Tipo Muestra
+        th Fecha Recepción
+        th Estado
+        th Determinación ID
+        th Valor Final
+        th Edad Paciente
+        th Valor Referencia ID
+        th Edad Mínima
+        th Edad Máxima
+        th Sexo
+        th Valor Referencia Mínimo
+        th Valor Referencia Máximo
+    tbody
+      if resultados && resultados.length
+        each resultado in resultados
+          tr
+            td= resultado.id_Orden
+            td= resultado.id_Paciente
+            td= resultado.Tipo_Muestra
+            td= resultado.Fecha_Recepcion ? new Date(resultado.Fecha_Recepcion).toLocaleDateString() : ''
+            td= resultado.estado
+            td= resultado.id_determinacion
+            td= resultado.valor_final
+            td= resultado.edad
+            td= resultado.id_ValorReferencia
+            td= resultado.Edad_Minima
+            td= resultado.Edad_Maxima
+            td= resultado.Sexo
+            td= resultado.Valor_Referencia_Minimo || 'N/A'
+            td= resultado.Valor_Referencia_Maximo || 'N/A'
+      else
+        tr
+          td(colspan='14') No se encontraron resultados.

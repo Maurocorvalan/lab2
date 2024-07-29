@@ -13,7 +13,7 @@ const modificarDeterminacionRuta = require("./routes/modificarDeterminacionRuta"
 const buscarOrdenesRuta = require("./routes/buscarOrdenesRuta");
 const modificarValrefRuta = require("./routes/modificarValrefRuta");
 const muestrasRouter = require("./routes/resultadosRuta");
-
+const flash = require('connect-flash');
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -119,7 +119,15 @@ function checkRole(roles) {
     }
   };
 }
+// Configurar flash messages
+app.use(flash());
 
+// Middleware para pasar los mensajes flash a las vistas
+app.use((req, res, next) => {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  next();
+});
 // Rutas protegidas por roles
 app.use("/", pacienteRuta);
 app.use("/buscarOrdenes", buscarOrdenesRuta);

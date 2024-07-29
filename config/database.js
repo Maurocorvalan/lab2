@@ -1,5 +1,6 @@
+// config/database.js
 const { Sequelize } = require('sequelize');
-Sequelize.Model.sync = () => Promise.resolve();
+
 // Configura la conexión a la base de datos
 const sequelize = new Sequelize({
   dialect: 'mysql', // Especifica la base de datos que estás utilizando
@@ -19,5 +20,5 @@ async function testDatabaseConnection() {
   }
 }
 
-// Exporta la instancia de Sequelize y la función para probar la conexión
-module.exports =  sequelize, testDatabaseConnection ;
+// Exporta la instancia de Sequelize
+module.exports = sequelize;

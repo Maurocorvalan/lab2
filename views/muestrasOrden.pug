@@ -1,6 +1,14 @@
 extends layout
 
 block content
+  head 
+    title Muestras
+  // Mostrar mensajes flash si existen
+  if success_msg
+    .alert.alert-success#success-msg #{success_msg}
+  else if error_msg
+    .alert.alert-danger#error-msg #{error_msg}
+
   h1 Muestras de la Orden #{id_orden}
 
   if muestras
@@ -16,15 +24,52 @@ block content
                 li Nombre Paciente: #{muestra.Paciente.nombre} #{muestra.Paciente.apellido}
                 li Tipo de Muestra: #{muestra.Tipo_Muestra}
                 li Fecha de Recepción: #{muestra.Fecha_Recepcion ? muestra.Fecha_Recepcion.toLocaleString('es-AR') : ''}
-                li Estado: #{muestra.estado}
+                li
+                  form(method="POST", action=`/muestras/actualizarEstado/${muestra.id_Muestra}`)
+                    label(for="estado") Estado:
+                    select.form-control(name="estado" id="estado")
+                      option(value="analitica" selected=muestra.estado === 'analitica') Analítica
+                      option(value="esperando toma de muestra" selected=muestra.estado === 'esperando toma de muestra') Esperando toma de Muestra
+                    button.btn.btn-secondary.btn-padding-right(type="submit") Modificar Muestra
               a.btn.btn-primary.btn-padding-right(href=`/muestras/mostrar/aniadirResultados/${muestra.id_Muestra}`) Añadir Resultados
-              a.btn.btn-secondary.btn-padding-right(href="") Modificar Muestra
               button.btn.btn-success.btn-padding-right(type="button", onclick=`generarPDF('${muestra.id_Muestra}', '${id_orden}')`) Imprimir
   else
     p #{mensaje}
-  h1 Validar Orden de trabajo
+
+  // Botón estilizado para validar orden de trabajo
+  .text-center
+    form(method="POST", action=`/muestras/actualizarEstadoOrden/${id_orden}`)
+      button.btn.btn-warning.btn-lg(type="submit") Enviar a validar
 
   script.
+    document.addEventListener('DOMContentLoaded', function () {
+      // Obtener elementos de alerta
+      const successMsg = document.getElementById('success-msg');
+      const errorMsg = document.getElementById('error-msg');
+
+      // Función para ocultar mensajes después de un período de tiempo
+      function hideMessage(element) {
+        if (element) {
+          // Verificar si es la primera visita
+          const isFirstVisit = localStorage.getItem('firstVisit') === null;
+          const hideTime = isFirstVisit ? 0 : 8000; // 0 segundos en la primera visita
+
+          setTimeout(() => {
+            element.style.display = 'none';
+          }, hideTime); 
+        }
+      }
+
+      // Almacenar marca de visita si es la primera vez
+      if (localStorage.getItem('firstVisit') === null) {
+        localStorage.setItem('firstVisit', 'true');
+      }
+
+      // Ocultar mensajes si están presentes
+      hideMessage(successMsg);
+      hideMessage(errorMsg);
+    });
+
     async function generarPDF(idMuestra, idOrden) {
       try {
         const info = await fetch(`/muestras/${idOrden}/generarPDFMuestra/${idMuestra}`);
@@ -54,3 +99,5 @@ block content
         alert('Error al generar PDF.');
       }
     }
+
+

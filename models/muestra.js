@@ -2,6 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const Paciente = require("./paciente");
 
+
 const Muestra = sequelize.define(
   "Muestra",
   {

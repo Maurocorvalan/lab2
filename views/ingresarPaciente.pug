@@ -29,8 +29,8 @@ block content
           .form-group
             label(for="genero") Género:
             select#genero.form-control(name="genero", required)
-              option(value="femenino", selected=(paciente && paciente.genero.toLowerCase() === "femenino")) Femenino
-              option(value="masculino", selected=(paciente && paciente.genero.toLowerCase() === "masculino")) Masculino
+              option(value="femenino", selected=(paciente && paciente.genero.toUpperCase() === "F")) Femenino
+              option(value="masculino", selected=(paciente && paciente.genero.toUpperCase() === "M")) Masculino
 
           .form-group
             label(for="embarazo") ¿Embarazo?
