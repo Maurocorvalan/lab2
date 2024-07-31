@@ -22,3 +22,92 @@ body {
   margin-top: 3px;
   margin-right: 3px;
 }
+/* Estilos para el contenedor del informe */
+.report-container {
+  font-family: Arial, sans-serif;
+  color: #333;
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+/* Estilo para el encabezado */
+.header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.header .logo img {
+  max-height: 60px;
+}
+
+.header .lab-info {
+  text-align: right;
+}
+
+/* Estilo para la información de la orden */
+.order-info {
+  margin-bottom: 20px;
+}
+
+.order-info h3 {
+  margin-top: 0;
+}
+
+/* Estilo para los detalles de la orden y del paciente */
+.order-details,
+.patient-info {
+  margin-bottom: 20px;
+}
+
+.order-details p,
+.patient-info p {
+  margin: 5px 0;
+}
+
+/* Estilo para la tabla de resultados */
+.report-details {
+  margin-top: 20px;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.result-table th,
+.result-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.result-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* Estilo para el pie de página */
+.footer {
+  margin-top: 30px;
+  border-top: 2px solid #ddd;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.footer p {
+  margin: 5px 0;
+}
+
+/* Estilo para la sección de powered-by */
+.powered-by {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.9em;
+}

@@ -231,6 +231,7 @@ router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
 // Ruta para mostrar los detalles de una orden
 router.get('/detalleOrden/:id_orden', async (req, res) => {
   const idOrden = req.params.id_orden;
+  const idUsuario = req.user ? req.user.id_Usuario : null; // Asumiendo que la ID del usuario está en req.user
 
   const query = `
     WITH GeneroPaciente AS (
@@ -381,11 +382,27 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
       return acc;
     }, []);
 
+    // Obtener información del usuario logueado
+    let usuarioLogueado = {};
+    if (idUsuario) {
+      const userQuery = `SELECT nombre_usuario FROM Usuarios WHERE id_Usuario = :idUsuario`;
+      const userResult = await sequelize.query(userQuery, {
+        replacements: { idUsuario: idUsuario },
+        type: sequelize.QueryTypes.SELECT
+      });
+      usuarioLogueado = userResult[0] || {};
+      console.log('---------------------------------------------------------------------------------------',usuarioLogueado);
+    }
+
     res.render('detalleOrden', {
       ordenes: ordenes,
+      usuarioLogueado: usuarioLogueado.nombre_usuario || 'Desconocido',
       success_msg: req.flash('success_msg'),
       error_msg: req.flash('error_msg')
+      
     });
+    console.log('---------------------------------------------------------------------------------------',usuarioLogueado);
+
   } catch (error) {
     console.error('Error al obtener detalles de la orden:', error);
     res.status(500).json({ error: 'Error interno del servidor' });

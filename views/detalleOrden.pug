@@ -3,21 +3,26 @@ extends layout
 block content
   .report-container
     .header
+      link(rel='stylesheet', href='/public/css/style.css')
+
       .logo
-        img(src='/path/to/logo.png' alt='Logo')
+        img(src='/public/img/medico.avif' alt='Logo' width='100%' height='200px')
       .lab-info
         h2 Empresa Pruebas, S.A. de C.V
-        p Calle # 762C Tel: 54 (266) 4792991
+        p Calle # 762C, Tel: 54 (266) 4792991
         p San Luis, Argentina
-      .order-info
-        h3 LABORATORIO DE ANÁLISIS CLÍNICOS
-        if ordenes && ordenes.length
+
+    .order-info
+      h3 LABORATORIO DE ANÁLISIS CLÍNICOS
+      if ordenes && ordenes.length
+        .order-details
           p Número de Orden: #{ordenes[0].id_Orden}
-          p Tipo de Muestra: #{ordenes[0].Tipo_Muestra}
           p Fecha de Creación: #{ordenes[0].Fecha_Creacion}
           p Fecha de Entrega: #{ordenes[0].Fecha_Entrega}
           p Estado de la Orden: #{ordenes[0].estado}
-          h4 Información del Paciente
+
+        h4 Información del Paciente
+        .patient-info
           p Nombre: #{ordenes[0].nombre} #{ordenes[0].apellido}
           p DNI: #{ordenes[0].dni}
           p Email: #{ordenes[0].email}
@@ -27,9 +32,9 @@ block content
           p Edad: #{ordenes[0].edad} Años
           p Embarazo: #{ordenes[0].embarazo ? 'Sí' : 'No'}
           p Diagnóstico: #{ordenes[0].diagnostico}
-          p Fecha de Registro: #{ordenes[0].fecha_registro}
-        else
-          p No se encontró información del paciente.
+      else
+        p No se encontró información del paciente.
+
     .report-details
       h4 Resultados de la Orden
       if ordenes && ordenes.length
@@ -57,10 +62,12 @@ block content
                 td #{muestra.edad || 'N/A'}
       else
         p No se encontraron resultados para las muestras.
+
     .footer
       p A T E N T A M E N T E
-      p [Nombre Químico Responsable]
+      p #{usuarioLogueado || 'Desconocido'}
       p Responsable Sanitario
       p CED. PROF: 00000000
+
     .powered-by
       p Software para laboratorios clínicos || www.laboratorios-clinicos.com
