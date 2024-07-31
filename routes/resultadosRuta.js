@@ -232,14 +232,21 @@ router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
 router.get('/detalleOrden/:id_orden', async (req, res) => {
   const idOrden = req.params.id_orden;
 
-  // Consulta SQL
   const query = `
-    -- Primero, crea una subconsulta para obtener el género del paciente y su fecha de nacimiento
     WITH GeneroPaciente AS (
         SELECT
             ot.id_Orden,
             p.genero,
-            p.fecha_nacimiento
+            p.fecha_nacimiento,
+            p.nombre,
+            p.apellido,
+            p.dni,
+            p.email,
+            p.telefono,
+            p.direccion,
+            p.embarazo,
+            p.diagnostico,
+            p.fecha_registro
         FROM
             ordenes_trabajo ot
         JOIN
@@ -247,25 +254,53 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
         WHERE
             ot.id_Orden = :idOrden
     ),
-
-    -- Calcula la edad del paciente en base a la fecha de nacimiento
     EdadPaciente AS (
         SELECT
             id_Orden,
             genero,
             fecha_nacimiento,
-            TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad
+            TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
+            nombre,
+            apellido,
+            dni,
+            email,
+            telefono,
+            direccion,
+            embarazo,
+            diagnostico,
+            fecha_registro
         FROM
             GeneroPaciente
     )
-
-    -- Luego, utiliza las subconsultas para filtrar los resultados
     SELECT
-        ot.*,                   -- Selecciona todas las columnas de la tabla ordenes_trabajo
-        r.*,                    -- Selecciona todas las columnas de la tabla resultados
-        d.*,                    -- Selecciona todas las columnas de la tabla determinaciones
-        vr.*,                   -- Selecciona todas las columnas de la tabla valoresReferencia
-        ep.edad AS edad         -- Incluye la edad calculada en el resultado
+        ot.id_Orden,
+        ot.id_Paciente,
+        ot.dni,
+        ot.Fecha_Creacion,
+        ot.Fecha_Entrega,
+        ot.estado AS estado_orden,
+        r.id_Resultado,
+        r.id_Muestra,
+        r.id_Determinacion,
+        r.valor_final,
+        r.fecha_resultado,
+        d.Nombre_Determinacion,
+        vr.id_ValorReferencia,
+        vr.Valor_Referencia_Minimo,
+        vr.Valor_Referencia_Maximo,
+        vr.Sexo,
+        vr.Edad_Minima,
+        vr.Edad_Maxima,
+        ep.edad,
+        ep.nombre,
+        ep.apellido,
+        ep.dni,
+        ep.email,
+        ep.telefono,
+        ep.direccion,
+        ep.embarazo,
+        ep.diagnostico,
+        ep.fecha_registro
     FROM
         ordenes_trabajo ot
     JOIN
@@ -279,46 +314,75 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
     WHERE
         ep.genero IN ('M', 'F') AND
         vr.Sexo = ep.genero AND
-        (ep.edad BETWEEN vr.Edad_Minima AND vr.Edad_Maxima OR
-        (vr.Edad_Minima IS NULL AND vr.Edad_Maxima IS NULL));
+        (ep.edad BETWEEN vr.Edad_Minima AND vr.Edad_Maxima );
   `;
 
+  // Funciones de formato
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   try {
-    // Ejecutar la consulta con Sequelize
     const resultados = await sequelize.query(query, {
       replacements: { idOrden: idOrden },
       type: sequelize.QueryTypes.SELECT
     });
 
-    // Agrupar los resultados
     const ordenes = resultados.reduce((acc, row) => {
       let orden = acc.find(o => o.id_Orden === row.id_Orden);
       if (!orden) {
         orden = {
           id_Orden: row.id_Orden,
           id_Paciente: row.id_Paciente,
-          Tipo_Muestra: row.Tipo_Muestra,
-          Fecha_Recepcion: row.Fecha_Recepcion,
-          estado: row.estado,
+          dni: row.dni,
+          Fecha_Creacion: formatDate(row.Fecha_Creacion),
+          Fecha_Entrega: formatDate(row.Fecha_Entrega),
+          estado: row.estado_orden,
+          nombre: row.nombre,
+          apellido: row.apellido,
+          email: row.email,
+          telefono: row.telefono,
+          direccion: row.direccion,
+          embarazo: row.embarazo,
+          diagnostico: row.diagnostico,
+          fecha_registro: formatDate(row.fecha_registro),
           muestras: []
         };
         acc.push(orden);
       }
       orden.muestras.push({
-        id_determinacion: row.id_determinacion,
+        id_Resultado: row.id_Resultado,
+        id_Muestra: row.id_Muestra,
+        id_Determinacion: row.id_Determinacion,
+        Nombre_Determinacion: row.Nombre_Determinacion,
         valor_final: row.valor_final,
-        edad: row.edad,
+        fecha_resultado: `${formatDate(row.fecha_resultado)} ${formatTime(row.fecha_resultado)}`,
         id_ValorReferencia: row.id_ValorReferencia,
+        Valor_Referencia_Minimo: row.Valor_Referencia_Minimo,
+        Valor_Referencia_Maximo: row.Valor_Referencia_Maximo,
+        Sexo: row.Sexo,
         Edad_Minima: row.Edad_Minima,
         Edad_Maxima: row.Edad_Maxima,
-        Sexo: row.Sexo
+        edad: row.edad
       });
       return acc;
     }, []);
 
-    // Enviar los resultados a la vista
     res.render('detalleOrden', {
-      resultados: resultados,  // Asegúrate de pasar `resultados` a la vista
+      ordenes: ordenes,
       success_msg: req.flash('success_msg'),
       error_msg: req.flash('error_msg')
     });
@@ -327,5 +391,7 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+
 
 module.exports = router;

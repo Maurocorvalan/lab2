@@ -1,42 +1,66 @@
 extends layout
 
 block content
-  h1 Detalle de Orden
-  table
-    thead
-      tr
-        th ID Orden
-        th ID Paciente
-        th Tipo Muestra
-        th Fecha Recepción
-        th Estado
-        th Determinación ID
-        th Valor Final
-        th Edad Paciente
-        th Valor Referencia ID
-        th Edad Mínima
-        th Edad Máxima
-        th Sexo
-        th Valor Referencia Mínimo
-        th Valor Referencia Máximo
-    tbody
-      if resultados && resultados.length
-        each resultado in resultados
-          tr
-            td= resultado.id_Orden
-            td= resultado.id_Paciente
-            td= resultado.Tipo_Muestra
-            td= resultado.Fecha_Recepcion ? new Date(resultado.Fecha_Recepcion).toLocaleDateString() : ''
-            td= resultado.estado
-            td= resultado.id_determinacion
-            td= resultado.valor_final
-            td= resultado.edad
-            td= resultado.id_ValorReferencia
-            td= resultado.Edad_Minima
-            td= resultado.Edad_Maxima
-            td= resultado.Sexo
-            td= resultado.Valor_Referencia_Minimo || 'N/A'
-            td= resultado.Valor_Referencia_Maximo || 'N/A'
+  .report-container
+    .header
+      .logo
+        img(src='/path/to/logo.png' alt='Logo')
+      .lab-info
+        h2 Empresa Pruebas, S.A. de C.V
+        p Calle # 762C Tel: 54 (266) 4792991
+        p San Luis, Argentina
+      .order-info
+        h3 LABORATORIO DE ANÁLISIS CLÍNICOS
+        if ordenes && ordenes.length
+          p Número de Orden: #{ordenes[0].id_Orden}
+          p Tipo de Muestra: #{ordenes[0].Tipo_Muestra}
+          p Fecha de Creación: #{ordenes[0].Fecha_Creacion}
+          p Fecha de Entrega: #{ordenes[0].Fecha_Entrega}
+          p Estado de la Orden: #{ordenes[0].estado}
+          h4 Información del Paciente
+          p Nombre: #{ordenes[0].nombre} #{ordenes[0].apellido}
+          p DNI: #{ordenes[0].dni}
+          p Email: #{ordenes[0].email}
+          p Teléfono: #{ordenes[0].telefono}
+          p Dirección: #{ordenes[0].direccion}
+          p Fecha de Nacimiento: #{ordenes[0].fecha_nacimiento}
+          p Edad: #{ordenes[0].edad} Años
+          p Embarazo: #{ordenes[0].embarazo ? 'Sí' : 'No'}
+          p Diagnóstico: #{ordenes[0].diagnostico}
+          p Fecha de Registro: #{ordenes[0].fecha_registro}
+        else
+          p No se encontró información del paciente.
+    .report-details
+      h4 Resultados de la Orden
+      if ordenes && ordenes.length
+        table.result-table
+          thead
+            tr
+              th Determinación
+              th Valor Final
+              th Valor de Referencia Mínimo
+              th Valor de Referencia Máximo
+              th Rango de Edad (Referencia)
+              th Sexo (Referencia)
+              th Fecha Resultado
+              th Edad del Paciente
+          tbody
+            each muestra in ordenes[0].muestras
+              tr
+                td #{muestra.Nombre_Determinacion || 'N/A'}
+                td #{muestra.valor_final || 'N/A'}
+                td #{muestra.Valor_Referencia_Minimo || 'N/A'}
+                td #{muestra.Valor_Referencia_Maximo || 'N/A'}
+                td #{muestra.Edad_Minima || 'N/A'} - #{muestra.Edad_Maxima || 'N/A'}
+                td #{muestra.Sexo || 'N/A'}
+                td #{muestra.fecha_resultado || 'N/A'}
+                td #{muestra.edad || 'N/A'}
       else
-        tr
-          td(colspan='14') No se encontraron resultados.
+        p No se encontraron resultados para las muestras.
+    .footer
+      p A T E N T A M E N T E
+      p [Nombre Químico Responsable]
+      p Responsable Sanitario
+      p CED. PROF: 00000000
+    .powered-by
+      p Software para laboratorios clínicos || www.laboratorios-clinicos.com
