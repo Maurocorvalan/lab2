@@ -391,7 +391,6 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
         type: sequelize.QueryTypes.SELECT
       });
       usuarioLogueado = userResult[0] || {};
-      console.log('---------------------------------------------------------------------------------------',usuarioLogueado);
     }
 
     res.render('detalleOrden', {
@@ -401,7 +400,6 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
       error_msg: req.flash('error_msg')
       
     });
-    console.log('---------------------------------------------------------------------------------------',usuarioLogueado);
 
   } catch (error) {
     console.error('Error al obtener detalles de la orden:', error);
