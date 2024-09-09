@@ -14,6 +14,7 @@ block content
     .form-group
       label(for="valor_final") Valor Final
       input#valor_final.form-control(type="text" name="valor_final" required)
+      
       label(for="unidad_medida") Unidad de Medida
       select#unidad_medida.form-control(name="unidad_medida" required, oninput="customUnitInputCheck()")
         option(value="") -- Seleccionar Unidad de Medida --

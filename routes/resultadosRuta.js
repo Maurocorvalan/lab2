@@ -301,7 +301,8 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
         ep.direccion,
         ep.embarazo,
         ep.diagnostico,
-        ep.fecha_registro
+        ep.fecha_registro,
+        ep.fecha_nacimiento
     FROM
         ordenes_trabajo ot
     JOIN
@@ -360,6 +361,8 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
           embarazo: row.embarazo,
           diagnostico: row.diagnostico,
           fecha_registro: formatDate(row.fecha_registro),
+          fecha_nacimiento: formatDate(row.fecha_nacimiento), // Añadido aquí
+          edad: row.edad, // Añadido aquí
           muestras: []
         };
         acc.push(orden);
@@ -398,7 +401,6 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
       usuarioLogueado: usuarioLogueado.nombre_usuario || 'Desconocido',
       success_msg: req.flash('success_msg'),
       error_msg: req.flash('error_msg')
-      
     });
 
   } catch (error) {
@@ -406,6 +408,7 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
 
 
 

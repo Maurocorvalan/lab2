@@ -3,94 +3,72 @@ extends layout
 block content
   head 
     title Buscar ordenes
-  h1 Buscar Orden de Trabajo
+  body
+    .container
+      h1 Buscar Orden de Trabajo
 
-  // Formulario de búsqueda de paciente
-  form(action="/ordenes" method="POST" id="searchForm")
-    .form-group
-      label(for="dniPaciente") Buscar Orden por DNI del Paciente:
-      input(type="text" name="dniPaciente" id="dniPaciente" placeholder="DNI del Paciente" class="form-control", required)
+      // Formulario de búsqueda de paciente
+      form(action="/ordenes" method="POST" id="searchForm")
+        .form-group
+          label(for="dniPaciente") Buscar Orden por DNI del Paciente:
+          input(type="text" name="dniPaciente" id="dniPaciente" placeholder="DNI del Paciente" class="form-control" required)
 
-    button(type="submit" class="btn btn-primary") Buscar
+        button(type="submit" class="btn btn-primary") Buscar
 
-  // Resultados de búsqueda de órdenes de trabajo
-  h2(id="resultHeading") Resultados:
-  #resultList
-    if ordenesTrabajo
-      each orden in ordenesTrabajo 
-        .card.mb-3
-          .card-body
-            ul.list-unstyled
-              li Órden de Trabajo: #{orden.id_Orden}
-              li Id Paciente: #{orden.id_Paciente}
-              li Fecha de Creación: #{orden.Fecha_Creacion}
-              li Fecha de Entrega: #{orden.Fecha_Entrega}
-              li Estado: #{orden.estado}
-              li
-                // Enlace para modificar la orden de trabajo individualmente
-                a.btn.btn-secondary(href=`/buscarOrdenes/crear-modificar-orden/${orden.id_Orden}`) Modificar Orden
+      // Resultados de búsqueda de órdenes de trabajo
+      h2(id="resultHeading") Resultados:
+      #resultList
 
+    script.
+      document.getElementById("searchForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const dniPaciente = document.getElementById("dniPaciente").value;
+        const resultHeading = document.getElementById("resultHeading");
+        const resultList = document.getElementById("resultList");
 
-
-
-  // Script para manejar la respuesta
-  script.
-    document.getElementById("searchForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const dniPaciente = document.getElementById("dniPaciente").value;
-      const resultHeading = document.getElementById("resultHeading");
-      const resultList = document.getElementById("resultList");
-
-      try {
-        const info = await fetch("/buscarOrdenes/ordenes", {  
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ dniPaciente }),
-        });
-
-        if (!info.ok) {
-          throw new Error(`HTTP error! Status: ${info.status}`);
-        }
-
-        const data = await info.json();
-        console.log(data);
-        resultList.innerHTML = ""; // Limpia el contenedor de la lista
-
-        if (data.length > 0) {
-          resultHeading.textContent = `Órdenes de trabajo asociadas al paciente con DNI: ${dniPaciente}`;
-
-          data.forEach((orden) => {
-
-
-
-            const listItem = document.createElement("div");
-            listItem.classList.add("card", "mb-3");
-            listItem.innerHTML = `
-              <div class="card-body">
-                <ul class="list-unstyled">
-                  <li>Órden de Trabajo: ${orden.id_Orden}</li>
-                  <li>Id Paciente: ${orden.id_Paciente}</li>
-                  <li>Fecha de Creación: ${orden.Fecha_Creacion}</li>
-                  <li>Fecha de Entrega: ${orden.Fecha_Entrega}</li>
-                  <li>Estado: ${orden.estado}</li>
-                  <li>
-                    <a class="btn btn-secondary" href="/buscarOrdenes/crear-modificar-orden/${orden.id_Orden}">Modificar Orden</a>
-                  </li>
-
-
-
-                </ul>
-              </div>
-            `;
-            resultList.appendChild(listItem);
+        try {
+          const info = await fetch("/buscarOrdenes/ordenes", {  
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ dniPaciente }),
           });
-        } else {
-          resultHeading.textContent = `No se encontraron órdenes de trabajo para el paciente con DNI ${dniPaciente}.`;
+
+          if (!info.ok) {
+            throw new Error(`HTTP error! Status: ${info.status}`);
+          }
+
+          const data = await info.json();
+          resultList.innerHTML = ""; // Limpia el contenedor de la lista
+
+          if (data.length > 0) {
+            resultHeading.textContent = `Órdenes de trabajo asociadas al paciente con DNI: ${dniPaciente}`;
+
+            data.forEach((orden) => {
+              const listItem = document.createElement("div");
+              listItem.classList.add("card", "mb-3");
+              listItem.innerHTML = `
+                <div class="card-body">
+                  <ul class="list-unstyled">
+                    <li>Órden de Trabajo: ${orden.id_Orden}</li>
+                    <li>Id Paciente: ${orden.id_Paciente}</li>
+                    <li>Fecha de Creación: ${orden.Fecha_Creacion}</li>
+                    <li>Fecha de Entrega: ${orden.Fecha_Entrega}</li>
+                    <li>Estado: ${orden.estado}</li>
+                    <li>
+                      <a class="btn btn-secondary" href="/buscarOrdenes/crear-modificar-orden/${orden.id_Orden}">Modificar Orden</a>
+                    </li>
+                  </ul>
+                </div>
+              `;
+              resultList.appendChild(listItem);
+            });
+          } else {
+            resultHeading.textContent = `No se encontraron órdenes de trabajo para el paciente con DNI ${dniPaciente}.`;
+          }
+        } catch (error) {
+          console.error('Error al buscar órdenes de trabajo:', error);
+          resultHeading.textContent = "Error al buscar órdenes de trabajo.";
         }
-      } catch (error) {
-        console.error('Error al buscar órdenes de trabajo:', error);
-        resultHeading.textContent = "Error al buscar órdenes de trabajo.";
-      }
-    });
+      });

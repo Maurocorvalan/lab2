@@ -3,7 +3,8 @@ extends layout
 block content
   head
     title Crear/Modificar Valores de Referencia
-  body
+
+  div.container.margin-top-custom
     h1 Crear/Modificar Valores de Referencia
 
     form#crear-modificar-valores-form(action=`/buscar-valores/crear-modificar-valores-referencia/${valorReferenciaExistente.id_ValorReferencia}`, method="POST")
@@ -27,6 +28,6 @@ block content
       div.form-group
         label(for="estado") Estado:
         select#estado(name="estado" class="form-control" required)
-          option(value="1" selected=valorReferenciaExistente.estado) Activo
-          option(value="0" selected=!valorReferenciaExistente.estado) Inactivo
+          option(value="1" selected=valorReferenciaExistente.estado === 1) Activo
+          option(value="0" selected=valorReferenciaExistente.estado === 0) Inactivo
       button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de guardar los cambios en el valor de referencia?')") Guardar Valores de Referencia

@@ -6,7 +6,7 @@ block content
 
   body
     .container
-      h1.mb-4 Generación de Orden de Trabajo
+      h1(class="margin-top-custom" ) Generación de Orden de Trabajo
       form#generar-orden-form(action="/orden/generacion-orden" method="POST")
         .form-group
           label(for="paciente") Paciente:
@@ -32,10 +32,10 @@ block content
           label(for="examenes") Examenes seleccionados:
           select#examenesSelect.form-control(name="examenesSelect", multiple)
           input#examenesSelectedIds(name="examenesSelectedIds" type="hidden")
-          p  Doble click para deseleccionar examenes
+          p Doble click para deseleccionar examenes
 
         .form-group
-          .form-check 
+          .form-check
             label(for="tiposMuestra") Tipos de Muestra:
             each tipo in tiposMuestra
               .form-check
@@ -46,7 +46,6 @@ block content
                 option(value="esperando_toma_muestra") Esperando Toma de Muestra
                 option(value="analitica") Analítica
                 option(value="faltante-de-muestra") Faltante de muestra
-
 
         button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Generar Orden de Trabajo
 
@@ -130,7 +129,6 @@ block content
       });
 
       // Manejar la selección de pacientes
-
       pacienteResults.addEventListener("click", (event) => {
         if (event.target.tagName === "OPTION") {
           const selectedOption = event.target;

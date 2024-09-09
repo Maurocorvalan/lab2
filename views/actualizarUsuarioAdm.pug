@@ -3,26 +3,27 @@ extends layout
 block content
   head
     title Actualizar Usuario
-  h1 Actualizar Usuario
 
-  form(action="/admin/actualizar-usuario" method="POST")
-    .container
+  div.container.margin-top-custom
+    h1 Actualizar Usuario
+
+    form(action="/admin/actualizar-usuario" method="POST")
       .form-group
         label(for="nombreBusqueda") Buscar Usuario por Nombre:
-        input(type="text" name="nombreBusqueda" id="nombreBusqueda" class="form-control", required)
+        input(type="text" name="nombreBusqueda" id="nombreBusqueda" class="form-control" required)
         button(type="button" onclick="buscarUsuario()" class="btn btn-primary") Buscar
 
       .form-group
         label(for="nombre") Nombre:
-        input(type="text" name="nombre" id="nombre" class="form-control", required)
+        input(type="text" name="nombre" id="nombre" class="form-control" required)
 
       .form-group
         label(for="correo_electronico") Correo Electrónico:
-        input(type="text" name="correo_electronico" id="correoElectronico" class="form-control", required)
+        input(type="text" name="correo_electronico" id="correoElectronico" class="form-control" required)
 
       .form-group
         label(for="password") Contraseña:
-        input(type="password" name="password" id="password" class="form-control", required)
+        input(type="password" name="password" id="password" class="form-control" required)
 
       .form-group
         label(for="rol") Rol:
@@ -33,68 +34,67 @@ block content
           option(value="admin") Administrador
 
       .form-group
-        button(type="submit" class="btn btn-success" onclick="confirmarActualizarUsuario()") Actualizar Usuario
+        button(type="submit" class="btn btn-success" onclick="return confirmarActualizarUsuario()") Actualizar Usuario
         button(type="button" onclick="eliminarUsuario()" class="btn btn-danger") Eliminar Usuario
 
-  // Mostrar mensaje de actualización
-  div(id="mensaje")
+    // Mostrar mensaje de actualización
+    div#mensaje
 
-  script.
-    function buscarUsuario() {
-      const nombreBusqueda = document.getElementById("nombreBusqueda").value;
-      if (!nombreBusqueda) {
-        document.getElementById("mensaje").innerHTML = "Debes completar el campo de búsqueda";
-        return;
-      }
-      fetch(`/admin/actualizarUsuarioAdm/${nombreBusqueda}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.usuario) {
-            document.getElementById('nombre').value = data.usuario.nombre_usuario;
-            document.getElementById("correoElectronico").value = data.usuario.correo_electronico;
-            document.getElementById("rol").value = data.usuario.rol;
-            document.getElementById("mensaje").innerHTML = ""; // Limpiar el mensaje
-          } else if (data.mensaje) {
-            alert(data.mensaje);
-          } else {
-            document.getElementById("mensaje").innerHTML = "Usuario no encontrado";
-          }
-        })
-        .catch(error => {
-          console.error("Error en la búsqueda: ", error);
-        });
-    }
-
-    function confirmarActualizarUsuario() {
-      if (confirm("¿Estás seguro de que deseas actualizar este usuario?")) {
-      }
-    }
-
-    function eliminarUsuario() {
-      const nombreBusqueda = document.getElementById("nombreBusqueda").value;
-      if (!nombreBusqueda) {
-        document.getElementById("mensaje").innerHTML = "Debes completar el campo de búsqueda";
-        return;
-      }
-      if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-        fetch(`/admin/eliminarUsuarioAdm/${nombreBusqueda}`, {
-          method: "DELETE",
-        })
+    script.
+      function buscarUsuario() {
+        const nombreBusqueda = document.getElementById("nombreBusqueda").value;
+        if (!nombreBusqueda) {
+          document.getElementById("mensaje").innerHTML = "Debes completar el campo de búsqueda";
+          return;
+        }
+        fetch(`/admin/actualizarUsuarioAdm/${nombreBusqueda}`)
           .then(response => response.json())
           .then(data => {
-            if (data.mensaje) {
-              document.getElementById("mensaje").innerHTML = data.mensaje;
-              // Vaciar los campos después de eliminar
-              document.getElementById('nombre').value = "";
-              document.getElementById("correoElectronico").value = "";
-              document.getElementById("rol").value = "";
-              document.getElementById("password").value = "";
+            if (data.usuario) {
+              document.getElementById('nombre').value = data.usuario.nombre_usuario;
+              document.getElementById("correoElectronico").value = data.usuario.correo_electronico;
+              document.getElementById("rol").value = data.usuario.rol;
+              document.getElementById("mensaje").innerHTML = ""; // Limpiar el mensaje
+            } else if (data.mensaje) {
+              alert(data.mensaje);
             } else {
               document.getElementById("mensaje").innerHTML = "Usuario no encontrado";
             }
           })
           .catch(error => {
-            console.error("Error al eliminar el usuario: ", error);
+            console.error("Error en la búsqueda: ", error);
           });
       }
-    }
+
+      function confirmarActualizarUsuario() {
+        return confirm("¿Estás seguro de que deseas actualizar este usuario?");
+      }
+
+      function eliminarUsuario() {
+        const nombreBusqueda = document.getElementById("nombreBusqueda").value;
+        if (!nombreBusqueda) {
+          document.getElementById("mensaje").innerHTML = "Debes completar el campo de búsqueda";
+          return;
+        }
+        if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+          fetch(`/admin/eliminarUsuarioAdm/${nombreBusqueda}`, {
+            method: "DELETE",
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.mensaje) {
+                document.getElementById("mensaje").innerHTML = data.mensaje;
+                // Vaciar los campos después de eliminar
+                document.getElementById('nombre').value = "";
+                document.getElementById("correoElectronico").value = "";
+                document.getElementById("rol").value = "";
+                document.getElementById("password").value = "";
+              } else {
+                document.getElementById("mensaje").innerHTML = "Usuario no encontrado";
+              }
+            })
+            .catch(error => {
+              console.error("Error al eliminar el usuario: ", error);
+            });
+        }
+      }

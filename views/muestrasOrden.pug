@@ -1,45 +1,47 @@
 extends layout
 
 block content
-  head 
-    title Muestras
-  // Mostrar mensajes flash si existen
-  if success_msg
-    .alert.alert-success#success-msg #{success_msg}
-  else if error_msg
-    .alert.alert-danger#error-msg #{error_msg}
+  .container.margin-top-custom
+    head 
+      title Muestras
 
-  h1 Muestras de la Orden #{id_orden}
+    // Mostrar mensajes flash si existen
+    if success_msg
+      .alert.alert-success#success-msg #{success_msg}
+    else if error_msg
+      .alert.alert-danger#error-msg #{error_msg}
 
-  if muestras
-    .row.row-cols-1.row-cols-md-3
-      each muestra in muestras
-        .col.mb-4
-          .card
-            .card-body
-              ul.list-unstyled
-                li Id Muestra: #{muestra.id_Muestra}
-                li Id Orden: #{muestra.id_Orden}
-                li Id Paciente: #{muestra.id_Paciente}
-                li Nombre Paciente: #{muestra.Paciente.nombre} #{muestra.Paciente.apellido}
-                li Tipo de Muestra: #{muestra.Tipo_Muestra}
-                li Fecha de Recepción: #{muestra.Fecha_Recepcion ? muestra.Fecha_Recepcion.toLocaleString('es-AR') : ''}
-                li
-                  form(method="POST", action=`/muestras/actualizarEstado/${muestra.id_Muestra}`)
-                    label(for="estado") Estado:
-                    select.form-control(name="estado" id="estado")
-                      option(value="analitica" selected=muestra.estado === 'analitica') Analítica
-                      option(value="esperando toma de muestra" selected=muestra.estado === 'esperando toma de muestra') Esperando toma de Muestra
-                    button.btn.btn-secondary.btn-padding-right(type="submit") Modificar Muestra
-              a.btn.btn-primary.btn-padding-right(href=`/muestras/mostrar/aniadirResultados/${muestra.id_Muestra}`) Añadir Resultados
-              button.btn.btn-success.btn-padding-right(type="button", onclick=`generarPDF('${muestra.id_Muestra}', '${id_orden}')`) Imprimir
-  else
-    p #{mensaje}
+    h1 Muestras de la Orden #{id_orden}
 
-  // Botón estilizado para validar orden de trabajo
-  .text-center
-    form(method="POST", action=`/muestras/actualizarEstadoOrden/${id_orden}`)
-      button.btn.btn-warning.btn-lg(type="submit") Enviar a validar
+    if muestras
+      .row.row-cols-1.row-cols-md-3
+        each muestra in muestras
+          .col.mb-4
+            .card
+              .card-body
+                ul.list-unstyled
+                  li Id Muestra: #{muestra.id_Muestra}
+                  li Id Orden: #{muestra.id_Orden}
+                  li Id Paciente: #{muestra.id_Paciente}
+                  li Nombre Paciente: #{muestra.Paciente.nombre} #{muestra.Paciente.apellido}
+                  li Tipo de Muestra: #{muestra.Tipo_Muestra}
+                  li Fecha de Recepción: #{muestra.Fecha_Recepcion ? muestra.Fecha_Recepcion.toLocaleString('es-AR') : ''}
+                  li
+                    form(method="POST", action=`/muestras/actualizarEstado/${muestra.id_Muestra}`)
+                      label(for="estado") Estado:
+                      select.form-control(name="estado" id="estado")
+                        option(value="analitica" selected=muestra.estado === 'analitica') Analítica
+                        option(value="esperando toma de muestra" selected=muestra.estado === 'esperando toma de muestra') Esperando toma de Muestra
+                      button.btn.btn-secondary(type="submit") Modificar Muestra
+                a.btn.btn-primary(href=`/muestras/mostrar/aniadirResultados/${muestra.id_Muestra}`) Añadir Resultados
+                button.btn.btn-success(type="button", onclick=`generarPDF('${muestra.id_Muestra}', '${id_orden}')`) Imprimir
+    else
+      p #{mensaje}
+
+    // Botón estilizado para validar orden de trabajo
+    .text-center
+      form(method="POST", action=`/muestras/actualizarEstadoOrden/${id_orden}`)
+        button.btn.btn-warning.btn-lg(type="submit") Enviar a validar
 
   script.
     document.addEventListener('DOMContentLoaded', function () {
@@ -99,5 +101,3 @@ block content
         alert('Error al generar PDF.');
       }
     }
-
-

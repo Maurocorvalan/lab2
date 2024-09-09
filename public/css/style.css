@@ -1,113 +1,237 @@
-html,
 body {
+  background-color: #f8f9fa;
+}
+
+/* Estilos para la navbar */
+.navbar {
+  background-color: #343a40; /* Cambiado a un color oscuro */
+  padding: 10px 20px;
+  width: 100%; /* Asegura que la navbar ocupe el 100% */
+}
+
+.navbar .navbar-brand {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar .navbar-nav .nav-link {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.navbar .dropdown-menu.show {
+  background-color: #f8f9fa;
+  left: 0; /* Alinea el menú desplegable a la izquierda */
+  right: auto; /* Evita que se alinee a la derecha */
+  width: auto; /* Permite que el ancho se ajuste al contenido */
+  max-width: none; /* Elimina el ancho máximo que podría causar desbordamiento */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Añade sombra para mejor visibilidad */
+}
+.navbar-collapse{
+  padding-right: 150px;
+}
+
+.navbar .dropdown-menu a {
+  color: #343a40;
+}
+
+.navbar .dropdown-menu a:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Página de Login */
+.login-page {
   width: 85%;
   margin: 0 auto;
 }
 
-.navbar {
+.login-page .navbar {
   background-color: black;
+  color: white;
 }
 
-.buttons-container {
-  display: flex;
-  justify-content: space-between;
-  margin: 30px 0;
+.login-page .container {
+  max-width: 700px;
+  padding-top: 40px;
 }
 
-.buttons {
-  margin-right: 200px;
+.login-page h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #343a40;
 }
 
-.btn-padding-right {
-  margin-top: 3px;
-  margin-right: 3px;
-}
-/* Estilos para el contenedor del informe */
-.report-container {
-  font-family: Arial, sans-serif;
-  color: #333;
-  margin: 20px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-}
-
-/* Estilo para el encabezado */
-.header {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
-
-.header .logo img {
-  max-height: 60px;
-}
-
-.header .lab-info {
-  text-align: right;
-}
-
-/* Estilo para la información de la orden */
-.order-info {
-  margin-bottom: 20px;
-}
-
-.order-info h3 {
-  margin-top: 0;
-}
-
-/* Estilo para los detalles de la orden y del paciente */
-.order-details,
-.patient-info {
-  margin-bottom: 20px;
-}
-
-.order-details p,
-.patient-info p {
-  margin: 5px 0;
-}
-
-/* Estilo para la tabla de resultados */
-.report-details {
-  margin-top: 20px;
-}
-
-.result-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-.result-table th,
-.result-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-.result-table th {
-  background-color: #f4f4f4;
+.login-page .form-group label {
   font-weight: bold;
 }
 
-/* Estilo para el pie de página */
+.login-page .form-control {
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-page .btn-primary {
+  width: 100%;
+  padding: 10px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+}
+
+.login-page .error-message {
+  color: red;
+  font-weight: bold;
+}
+
+/* Estilos globales */
+html, body {
+  margin: 0;
+  height: 100%;
+  padding: 0; /* Elimina el padding para que el navbar y footer ocupen el 100% del ancho */
+  width: 100%;
+}
+
+.container {
+  max-width: 55%;
+  margin: 100px auto;
+}
+
+/* Footer */
 .footer {
-  margin-top: 30px;
-  border-top: 2px solid #ddd;
-  padding-top: 10px;
+  background-color: #343a40;
+  color: white;
   text-align: center;
+  padding: 20px;
+  width: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
 }
 
 .footer p {
   margin: 5px 0;
 }
 
-/* Estilo para la sección de powered-by */
-.powered-by {
-  margin-top: 20px;
+.content {
+  flex: 1; /* Permite que el contenido ocupe el espacio disponible */
+}
+
+/* Mejoras para el informe */
+.report-container {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.result-table th {
+  background-color: #343a40;
+  color: white;
   text-align: center;
-  font-size: 0.9em;
+}
+
+.result-table td {
+  text-align: center;
+}
+.margin-top-custom {
+  margin-top: 80px;
+}
+.report-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Asegura que el contenedor ocupe al menos el alto de la vista */
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  flex: 0 0 auto;
+}
+
+.lab-info {
+  flex: 1;
+  margin-left: 20px;
+}
+
+.lab-info h2,
+.lab-info p {
+  margin: 0;
+}
+
+.report-details {
+  flex: 1;
+  margin-top: 20px; /* Espacio entre el contenido y el pie de página */
+}
+
+.content-footer {
+  margin-top: 20px; /* Espacio entre el contenido y el pie de página */
+  padding: 10px;
+
+  border-top: 1px solid #ddd;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: separate; 
+  border-spacing: 0 10px; 
+}
+
+.result-table tr {
+  border-bottom: 1px solid #ddd; 
+}
+
+.result-table th,
+.result-table td {
+  border: 1px solid #ddd; 
+  padding: 15px; 
+  text-align: left; 
+}
+
+
+
+
+.result-table td {
+  font-size: 14px; 
+  line-height: 1.6; 
+}
+
+.result-table tr:hover {
+  background-color: #eaeaea; 
+}
+@media print {
+  .report-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  .result-table {
+    width: 100%;
+    font-size: 10px; /* Reducir el tamaño de la fuente si es necesario */
+    border-collapse: collapse; /* Eliminar espacios entre celdas */
+  }
+
+  .result-table th,
+  .result-table td {
+    padding: 5px; /* Reducir el padding para ajustar el contenido */
+  }
+
+  /* Ajustar márgenes para la impresión */
+  @page {
+    size: A4;
+    margin: 10mm; /* Ajustar el margen si es necesario */
+  }
 }

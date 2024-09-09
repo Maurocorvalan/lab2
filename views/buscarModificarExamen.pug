@@ -3,19 +3,20 @@ extends layout
 block content
   head
     title Buscar y Modificar Examen
-  h1 Buscar y Modificar Examen
 
   div.container
+    h1 Buscar y Modificar Examen
+    
     form(action="/modificar-examen/buscar-modificar-examen" method="post" class="mb-4")
       div.form-group
-        label(for="codigo") Codigo del Examen:
-        input(type="text" name="codigo", required, class="form-control")
+        label(for="codigo") Código del Examen:
+        input(type="text" name="codigo" required class="form-control")
       button(type="submit" class="btn btn-primary") Buscar Examen
 
     if examen
       h2 Examen Encontrado
 
-      .card(style="width: 18rem;, background-color:#EEEEEE")
+      .card(style="width: 18rem; background-color: #EEEEEE;")
         .card-body
           h5.card-title ID: #{examen.id_examen}
           p.card-text Nombre: #{examen.nombre_examen}
@@ -23,12 +24,11 @@ block content
           p.card-text Código: #{examen.codigo}
           p.card-text Estado: #{examen.estado ? 'Activo' : 'Inactivo'}
 
-
       form(action="/modificar-examen/modificar" method="post" class="mt-4")
-        input(type="hidden" name="id_examen", value=examen.id_examen)
+        input(type="hidden" name="id_examen" value=examen.id_examen)
         div.form-group
           label(for="nombre_examen") Nuevo Nombre del Examen:
-          input(type="text" name="nombre_examen", value=examen.nombre_examen, required, class="form-control")
+          input(type="text" name="nombre_examen" value=examen.nombre_examen required class="form-control")
 
         div.form-group
           label(for="descripcion") Nueva Descripción del Examen:
@@ -36,7 +36,7 @@ block content
 
         div.form-group
           label(for="codigo") Nuevo Código del Examen:
-          input(type="text" name="codigo", value=examen.codigo, required, class="form-control")
+          input(type="text" name="codigo" value=examen.codigo required class="form-control")
 
         div.form-group
           label(for="estado") Estado:

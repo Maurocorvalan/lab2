@@ -4,18 +4,20 @@ block content
   head
     title Buscar Paciente por DNI, Apellido o Email
   body
-    div#container
+    .container
       h2#titulo Buscar Paciente
       form#buscar-form(action="/buscar-paciente" method="post")
-        div.form-group
+        .form-group
           label(for="searchType") Buscar por:
           select#searchType(name="searchType" class="form-control" required)
             option(value="dni") DNI
             option(value="apellido") APELLIDO
             option(value="email") EMAIL
-        div.form-group
-          label(for="searchTerm") Ingresar informacion:
+
+        .form-group
+          label(for="searchTerm") Ingresar información:
           input#searchTerm(type="text" name="searchTerm" class="form-control" required)
+
         button#guardar-btn(type="submit" class="btn btn-primary") Buscar
 
         if mensaje

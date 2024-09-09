@@ -3,27 +3,33 @@ extends layout
 block content
   head
     title Crear Determinaciones
-  body
+
+  div.container.margin-top-custom
     h1 Crear Determinaciones
+    
     form#crear-determinacion-form(action="/determinacion/crear-determinacion" method="POST")
       div.form-group
         label(for="Nombre_Determinacion") Nombre de la Determinación:
         input#Nombre_Determinacion(type="text" name="Nombre_Determinacion" class="form-control" required)
+      
       div.form-group
         label(for="Valor") Valor:
         input#Valor(type="number" step="0.01" name="Valor" class="form-control" required)
+      
       div.form-group
         label(for="Unidad_Medida") Unidad de Medida:
         input#Unidad_Medida(type="text" name="Unidad_Medida" class="form-control" required)
+      
       div.form-group
         label(for="Sexo") Sexo:
         select#Sexo(name="Sexo" class="form-control" required)
           option(value="M") Masculino
           option(value="F") Femenino
+      
       div.form-group
         label(for="id_examen") Examen:
         select#id_examen(name="id_examen" class="form-control" required)
           each examen in examenes
             option(value=examen.id_examen) #{examen.nombre_examen} COD: #{examen.codigo} ID: #{examen.id_examen}
 
-      button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear la determinacion?')") Crear Determinación
+      button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear la determinación?')") Crear Determinación

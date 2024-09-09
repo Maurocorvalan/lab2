@@ -4,15 +4,28 @@ block content
   head
     title Crear Examen
   body
-    h1 Crear Examen
-    form#crear-examen-form(action="/examen/crear-examen" method="post")
-      div.form-group
-        label(for="nombre_examen") Nombre del Examen:
-        input#nombre_examen(type="text" name="nombre_examen" class="form-control" required)
-      div.form-group
-        label(for="descripcion") Descripción del Examen:
-        textarea#descripcion(name="descripcion" class="form-control")
-      div.form-group
-        label(for="codigo") Código del Examen:
-        input#codigo(type="text" name="codigo" class="form-control" required)
-      button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crearar el examen?')") Crear Examen
+    nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.fixed-top
+      a.navbar-brand(href="/redirigirUsuario") Laboratorio
+      button.navbar-toggler(type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation")
+        span.navbar-toggler-icon
+      #navbarNav.collapse.navbar-collapse
+        ul.navbar-nav.ml-auto
+          li.nav-item.dropdown
+            a.nav-link.dropdown-toggle(href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Menu
+            .dropdown-menu(aria-labelledby="navbarDropdown")
+              a.dropdown-item(href="/cambiarContrasena") Cambiar Contraseña
+              a.dropdown-item(href="/logout" onclick="return confirm('¿Estás seguro de cerrar sesión?')") Cerrar Sesión
+
+    .container.margin-top-custom
+      h1 Crear Examen
+      form#crear-examen-form(action="/examen/crear-examen" method="post")
+        .form-group
+          label(for="nombre_examen") Nombre del Examen:
+          input#nombre_examen.form-control(type="text" name="nombre_examen" required)
+        .form-group
+          label(for="descripcion") Descripción del Examen:
+          textarea#descripcion.form-control(name="descripcion")
+        .form-group
+          label(for="codigo") Código del Examen:
+          input#codigo.form-control(type="text" name="codigo" required)
+        button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear el examen?')") Crear Examen
