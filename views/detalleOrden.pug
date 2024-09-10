@@ -56,9 +56,16 @@ block content
                 th Edad del Paciente
             tbody
               each muestra in ordenes[0].muestras
+                - // Función para extraer solo los números
+                - const valorFinalNumerico = parseFloat(muestra.valor_final.replace(/[^\d.-]/g, '')) || 0;
+                - const valorMaximoNumerico = parseFloat(muestra.Valor_Referencia_Maximo.replace(/[^\d.-]/g, '')) || 0;
                 tr
                   td #{muestra.Nombre_Determinacion || 'N/A'}
-                  td #{muestra.valor_final || 'N/A'}
+                  // Comparar valor_final con Valor_Referencia_Maximo
+                  if valorFinalNumerico > valorMaximoNumerico
+                    td(style='color:red; font-weight:bold' ) #{muestra.valor_final || 'N/A'}
+                  else
+                    td #{muestra.valor_final || 'N/A'}
                   td #{muestra.Valor_Referencia_Minimo || 'N/A'}
                   td #{muestra.Valor_Referencia_Maximo || 'N/A'}
                   td #{muestra.Edad_Minima || 'N/A'} - #{muestra.Edad_Maxima || 'N/A'}
