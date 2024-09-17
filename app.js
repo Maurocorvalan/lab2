@@ -13,7 +13,7 @@ const modificarDeterminacionRuta = require("./routes/modificarDeterminacionRuta"
 const buscarOrdenesRuta = require("./routes/buscarOrdenesRuta");
 const modificarValrefRuta = require("./routes/modificarValrefRuta");
 const muestrasRouter = require("./routes/resultadosRuta");
-const flash = require('connect-flash');
+const flash = require("connect-flash");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -124,8 +124,8 @@ app.use(flash());
 
 // Middleware para pasar los mensajes flash a las vistas
 app.use((req, res, next) => {
-  res.locals.success_msg = req.flash('success_msg');
-  res.locals.error_msg = req.flash('error_msg');
+  res.locals.success_msg = req.flash("success_msg");
+  res.locals.error_msg = req.flash("error_msg");
   next();
 });
 // Rutas protegidas por roles
@@ -239,7 +239,9 @@ app.get("/recepcionista", (req, res) => {
 app.get("/tecnico", (req, res) => {
   if (
     req.isAuthenticated() &&
-    (req.user.rol === "tecnico" || req.user.rol === "bioquimico" || req.user.rol === "admin")
+    (req.user.rol === "tecnico" ||
+      req.user.rol === "bioquimico" ||
+      req.user.rol === "admin")
   ) {
     res.render("tecnico", { nombreUsuario: req.user.nombre_usuario });
   } else {
@@ -249,7 +251,10 @@ app.get("/tecnico", (req, res) => {
 
 // Ruta GET para la vista de bioquímico
 app.get("/bioquimico", (req, res) => {
-  if (req.isAuthenticated() && (req.user.rol === "bioquimico" || req.user.rol === "admin")) {
+  if (
+    req.isAuthenticated() &&
+    (req.user.rol === "bioquimico" || req.user.rol === "admin")
+  ) {
     res.render("bioquimico", { nombreUsuario: req.user.nombre_usuario });
   } else {
     res.status(403).send("Acceso no autorizado");
@@ -490,8 +495,5 @@ sequelize
     });
   })
   .catch((error) => {
-    console.error(
-      "Error al sincronizar modelos con la base de datos:",
-      error
-    );
+    console.error("Error al sincronizar modelos con la base de datos:", error);
   });

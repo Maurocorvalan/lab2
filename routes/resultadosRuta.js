@@ -8,7 +8,8 @@ const Orden = require("../models/ordenes_trabajo");
 const Determinacion = require("../models/determinacion");
 const Resultado = require("../models/resultados");
 const ValoresReferencia = require("../models/valoresReferencia");
-const sequelize  = require('../config/database');
+const sequelize = require("../config/database");
+const auditoriaController = require("../routes/AuditoriaRuta");
 
 const fs = require("fs");
 
@@ -145,11 +146,21 @@ router.get(
   }
 );
 
+
 // Ruta para añadir un resultado
 router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
   const id_muestra = req.params.id_muestra;
   const { id_determinacion, valor_final, unidad_medida, custom_unidad_medida } =
     req.body;
+
+  // Verifica que req.user esté definido y tiene dataValues
+  if (!req.user || !req.user.dataValues) {
+    return res
+      .status(401)
+      .send("Usuario no autenticado o datos de usuario no disponibles.");
+  }
+
+  const usuarioId = req.user.dataValues.id_Usuario;
 
   try {
     // Determinar la unidad de medida a usar
@@ -160,10 +171,16 @@ router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
     const valorFinalConUnidad = unidadMedida
       ? `${valor_final} ${unidadMedida}`
       : valor_final;
+
     // Obtener id_Orden desde la muestra
     const muestra = await Muestra.findByPk(id_muestra);
+    if (!muestra) {
+      return res.status(404).send("Muestra no encontrada.");
+    }
+
     const id_Orden = muestra.id_Orden; // Captura id_Orden
-    console.log("aca esta el id de la orden: " + id_Orden);
+    console.log("ID de la orden: " + id_Orden);
+
     // Crear un nuevo resultado
     await Resultado.create({
       id_Muestra: id_muestra,
@@ -173,28 +190,52 @@ router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
       fecha_resultado: new Date(),
     });
 
+    // Registro de auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Añadir Resultado",
+      `Añadido un nuevo resultado para la muestra con ID: ${id_muestra}`
+    );
+
     res.redirect(`/muestras/mostrar/${id_Orden}`); // Redirige a la vista de muestras
   } catch (error) {
     console.error("Error al añadir resultado:", error);
     res.status(500).json({ error: "Error al añadir resultado" });
   }
 });
+
 // Ruta para actualizar el estado de una muestra
 router.post("/actualizarEstado/:id_muestra", async (req, res) => {
   const id_muestra = req.params.id_muestra;
   const { estado } = req.body;
+
+  // Verifica que req.user esté definido y tiene dataValues
+  if (!req.user || !req.user.dataValues) {
+    return res
+      .status(401)
+      .send("Usuario no autenticado o datos de usuario no disponibles.");
+  }
+
+  const usuarioId = req.user.dataValues.id_Usuario;
 
   try {
     // Buscar la muestra por ID
     const muestra = await Muestra.findByPk(id_muestra);
     if (!muestra) {
       req.flash("error_msg", "Muestra no encontrada.");
-      return res.redirect(`/muestras/mostrar/${muestra.id_Orden}`);
+      return res.redirect(`/muestras/mostrar/${id_muestra}`);
     }
 
     // Actualizar el estado de la muestra
     muestra.estado = estado;
     await muestra.save();
+
+    // Registro de auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Actualizar Estado de Muestra",
+      `Estado de la muestra con ID: ${id_muestra} actualizado a: ${estado}`
+    );
 
     // Agregar mensaje de éxito y redirigir
     req.flash("success_msg", "Estado actualizado con éxito.");
@@ -202,12 +243,22 @@ router.post("/actualizarEstado/:id_muestra", async (req, res) => {
   } catch (error) {
     console.error("Error al actualizar estado:", error);
     req.flash("error_msg", "Error al actualizar estado.");
-    res.redirect(`/muestras/mostrar/${muestra.id_Orden}`);
+    res.redirect(`/muestras/mostrar/${id_muestra}`);
   }
 });
+
 // Ruta para actualizar el estado de una orden
 router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
   const id_orden = req.params.id_orden;
+
+  // Verifica que req.user esté definido y tiene dataValues
+  if (!req.user || !req.user.dataValues) {
+    return res
+      .status(401)
+      .send("Usuario no autenticado o datos de usuario no disponibles.");
+  }
+
+  const usuarioId = req.user.dataValues.id_Usuario;
 
   try {
     // Actualiza el estado de la orden
@@ -218,9 +269,16 @@ router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
       }
     );
 
+    // Registro de auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Actualizar Estado de Orden",
+      `Orden con ID: ${id_orden} actualizada a "Para validar"`
+    );
+
     // Agrega un mensaje de éxito y redirige
     req.flash("success_msg", 'Orden actualizada a "Para validar"');
-    res.redirect(`/muestras/detalleOrden/${id_orden}`); //Redirige a la nueva ruta que muestra los detalles de la orden
+    res.redirect(`/muestras/detalleOrden/${id_orden}`); // Redirige a la nueva ruta que muestra los detalles de la orden
   } catch (error) {
     console.error("Error al actualizar el estado de la orden:", error);
     req.flash("error_msg", "Error al actualizar el estado de la orden.");
@@ -229,7 +287,7 @@ router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
 });
 
 // Ruta para mostrar los detalles de una orden
-router.get('/detalleOrden/:id_orden', async (req, res) => {
+router.get("/detalleOrden/:id_orden", async (req, res) => {
   const idOrden = req.params.id_orden;
   const idUsuario = req.user ? req.user.id_Usuario : null; // Asumiendo que la ID del usuario está en req.user
 
@@ -321,30 +379,30 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
 
   // Funciones de formato
   const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return "N/A";
     const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
   const formatTime = (dateStr) => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return "N/A";
     const date = new Date(dateStr);
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${hours}:${minutes}`;
   };
 
   try {
     const resultados = await sequelize.query(query, {
       replacements: { idOrden: idOrden },
-      type: sequelize.QueryTypes.SELECT
+      type: sequelize.QueryTypes.SELECT,
     });
 
     const ordenes = resultados.reduce((acc, row) => {
-      let orden = acc.find(o => o.id_Orden === row.id_Orden);
+      let orden = acc.find((o) => o.id_Orden === row.id_Orden);
       if (!orden) {
         orden = {
           id_Orden: row.id_Orden,
@@ -363,7 +421,7 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
           fecha_registro: formatDate(row.fecha_registro),
           fecha_nacimiento: formatDate(row.fecha_nacimiento), // Añadido aquí
           edad: row.edad, // Añadido aquí
-          muestras: []
+          muestras: [],
         };
         acc.push(orden);
       }
@@ -373,14 +431,16 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
         id_Determinacion: row.id_Determinacion,
         Nombre_Determinacion: row.Nombre_Determinacion,
         valor_final: row.valor_final,
-        fecha_resultado: `${formatDate(row.fecha_resultado)} ${formatTime(row.fecha_resultado)}`,
+        fecha_resultado: `${formatDate(row.fecha_resultado)} ${formatTime(
+          row.fecha_resultado
+        )}`,
         id_ValorReferencia: row.id_ValorReferencia,
         Valor_Referencia_Minimo: row.Valor_Referencia_Minimo,
         Valor_Referencia_Maximo: row.Valor_Referencia_Maximo,
         Sexo: row.Sexo,
         Edad_Minima: row.Edad_Minima,
         Edad_Maxima: row.Edad_Maxima,
-        edad: row.edad
+        edad: row.edad,
       });
       return acc;
     }, []);
@@ -391,25 +451,21 @@ router.get('/detalleOrden/:id_orden', async (req, res) => {
       const userQuery = `SELECT nombre_usuario FROM Usuarios WHERE id_Usuario = :idUsuario`;
       const userResult = await sequelize.query(userQuery, {
         replacements: { idUsuario: idUsuario },
-        type: sequelize.QueryTypes.SELECT
+        type: sequelize.QueryTypes.SELECT,
       });
       usuarioLogueado = userResult[0] || {};
     }
 
-    res.render('detalleOrden', {
+    res.render("detalleOrden", {
       ordenes: ordenes,
-      usuarioLogueado: usuarioLogueado.nombre_usuario || 'Desconocido',
-      success_msg: req.flash('success_msg'),
-      error_msg: req.flash('error_msg')
+      usuarioLogueado: usuarioLogueado.nombre_usuario || "Desconocido",
+      success_msg: req.flash("success_msg"),
+      error_msg: req.flash("error_msg"),
     });
-
   } catch (error) {
-    console.error('Error al obtener detalles de la orden:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error("Error al obtener detalles de la orden:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
-
-
-
 
 module.exports = router;

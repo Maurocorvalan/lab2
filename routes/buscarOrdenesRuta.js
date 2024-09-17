@@ -5,7 +5,8 @@ const Paciente = require("../models/paciente"); // Asegúrate de tener un modelo
 const Muestra = require("../models/muestra");
 const Examen = require("../models/examen");
 const OrdenesExamen = require("../models/ordenes_examen");
-const { Op } = require('sequelize');
+const auditoriaController = require("../routes/AuditoriaRuta");
+const { Op } = require("sequelize");
 
 // Ruta para buscar un paciente y mostrar sus órdenes de trabajo
 router.get("/ordenes", (req, res) => {
@@ -20,9 +21,7 @@ router.post("/ordenes", async (req, res) => {
 
     // Buscar órdenes de trabajo por id_paciente
     const ordenesTrabajo = await OrdenTrabajo.findAll({
-      where: { dni: dniPaciente,
-        estado: {[Op.not]: 'cancelada'}
-       },
+      where: { dni: dniPaciente, estado: { [Op.not]: "cancelada" } },
       attributes: [
         "id_Orden",
         "id_Paciente",
@@ -147,7 +146,21 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
     if (ordenTrabajoExistente) {
       ordenTrabajoExistente.estado = estado;
       await ordenTrabajoExistente.save();
+      if (!req.user || !req.user.dataValues) {
+        return res
+          .status(401)
+          .send("Usuario no autenticado o datos de usuario no disponibles.");
+      }
 
+      // Obtener el ID del usuario
+      const usuarioId = req.user.dataValues.id_Usuario;
+
+      // Registro de auditoría
+      await auditoriaController.registrar(
+        usuarioId, // usuarioId
+        "Modificación de Orden", // operación
+        `Modificación del estado de la orden ${idOrden} a ${estado}` // detalles
+      );
       // Verificar si se han seleccionado tipos de muestra y crearlas si es necesario
       if (Array.isArray(tipos_muestra) && tipos_muestra.length > -1) {
         try {
@@ -186,7 +199,9 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
         });
 
         if (examenesExistentes.length !== examenesSelectedIdsArray.length) {
-          return res.status(400).send("Uno o más IDs de examen no son válidos.");
+          return res
+            .status(400)
+            .send("Uno o más IDs de examen no son válidos.");
         }
 
         // Insertar los exámenes asociados a la orden si hay IDs válidos
@@ -203,7 +218,10 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
       res.status(404).send("Orden de trabajo no encontrada.");
     }
   } catch (error) {
-    console.error("Error al procesar la orden de trabajo y las muestras:", error);
+    console.error(
+      "Error al procesar la orden de trabajo y las muestras:",
+      error
+    );
     res.status(500).send("Error interno del servidor");
   }
 });
@@ -230,10 +248,20 @@ router.get("/cancelar-orden/:idOrden", async (req, res) => {
 });
 
 // Ruta para procesar la cancelación de una orden de trabajo
+// Ruta para procesar la cancelación de una orden de trabajo
 router.post("/cancelar-orden/:idOrden", async (req, res) => {
   try {
     const { idOrden } = req.params;
     const { descripcionCancelacion } = req.body;
+
+    // Verifica que req.user esté definido y tiene dataValues
+    if (!req.user || !req.user.dataValues) {
+      return res
+        .status(401)
+        .send("Usuario no autenticado o datos de usuario no disponibles.");
+    }
+
+    const usuarioId = req.user.dataValues.id_Usuario;
 
     // Buscar la orden de trabajo existente
     const ordenTrabajoExistente = await OrdenTrabajo.findByPk(idOrden);
@@ -245,6 +273,13 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
       await ordenTrabajoExistente.save();
 
       console.log("Orden de trabajo cancelada con éxito.");
+
+      // Registro de auditoría
+      await auditoriaController.registrar(
+        usuarioId, // usuarioId
+        "Cancelación de Orden", // operación
+        `Cancelación de la orden ${idOrden} con descripción: ${descripcionCancelacion}` // detalles
+      );
     } else {
       // Si no existe, devuelve un mensaje de error
       return res.status(404).send("Orden de Trabajo no encontrada");
@@ -253,7 +288,10 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
     // Redirecciona a la página principal de órdenes después de cancelar
     res.redirect("/buscarOrdenes/ordenes");
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Error al procesar la cancelación de la orden de trabajo:",
+      error
+    );
     res
       .status(500)
       .send("Error al procesar la cancelación de la orden de trabajo.");

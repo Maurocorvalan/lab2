@@ -5,6 +5,7 @@ const Muestra = require("../models/muestra");
 const Examen = require("../models/examen");
 const Paciente = require("../models/paciente");
 const OrdenesExamenes = require("../models/ordenes_examen");
+const auditoriaController = require("../routes/AuditoriaRuta");
 
 // Función para sumar días a una fecha
 function sumarDias(fecha, dias) {
@@ -13,33 +14,32 @@ function sumarDias(fecha, dias) {
   return resultado;
 }
 router.get("/ordenes", (req, res) => {
-  res.render("buscarPacientesOrdenes"); 
+  res.render("buscarPacientesOrdenes");
 });
-router.get('/generacion-orden', async (req, res) => {
+router.get("/generacion-orden", async (req, res) => {
   try {
-      const tiposMuestra = [
-          { value: "sangre", label: "Sangre" },
-          { value: "orina", label: "Orina" },
-          { value: "heces", label: "Heces" },
-          { value: "liquidoCefaloraquideo", label: "Líquido Cefalorraquídeo" },
-          { value: "saliva", label: "Saliva" },
-          { value: "nasofaringea", label: "Secreción Nasofaríngea" }
-      ];
+    const tiposMuestra = [
+      { value: "sangre", label: "Sangre" },
+      { value: "orina", label: "Orina" },
+      { value: "heces", label: "Heces" },
+      { value: "liquidoCefaloraquideo", label: "Líquido Cefalorraquídeo" },
+      { value: "saliva", label: "Saliva" },
+      { value: "nasofaringea", label: "Secreción Nasofaríngea" },
+    ];
 
-      // Obtén la lista de exámenes y pacientes desde la base de datos
-      const examenes = await Examen.findAll();
-      const pacientes = await Paciente.findAll();
-      res.render('generarOrden', { tiposMuestra, examenes, pacientes });
+    // Obtén la lista de exámenes y pacientes desde la base de datos
+    const examenes = await Examen.findAll();
+    const pacientes = await Paciente.findAll();
+    res.render("generarOrden", { tiposMuestra, examenes, pacientes });
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Error al obtener la lista de exámenes.');
+    console.error(error);
+    res.status(500).send("Error al obtener la lista de exámenes.");
   }
 });
 
 // Ruta para procesar la generación de orden
 router.post("/generacion-orden", async (req, res) => {
   try {
-    // Obtiene los datos del formulario
     const {
       estado,
       tipos_muestra,
@@ -48,6 +48,15 @@ router.post("/generacion-orden", async (req, res) => {
       dni_paciente,
     } = req.body;
     const user = req.user;
+
+    // Verifica que req.user esté definido y tiene dataValues
+    if (!user || !user.dataValues) {
+      return res
+        .status(401)
+        .send("Usuario no autenticado o datos de usuario no disponibles.");
+    }
+
+    const usuarioId = user.dataValues.id_Usuario;
 
     // Verifica si id_paciente es null
     if (!id_paciente) {
@@ -108,6 +117,13 @@ router.post("/generacion-orden", async (req, res) => {
       console.warn("No se seleccionaron tipos de muestra.");
     }
 
+    // Registro de auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Generación de Orden de Trabajo",
+      `Generación de una nueva orden con ID: ${nuevaOrdenId}`
+    );
+
     // Redirigir según el rol del usuario
     if (req.isAuthenticated() && req.user && req.user.rol === "tecnico") {
       res.redirect("/tecnico");
@@ -133,6 +149,5 @@ router.post("/generacion-orden", async (req, res) => {
     res.status(500).send("Error al procesar el formulario");
   }
 });
-
 
 module.exports = router;

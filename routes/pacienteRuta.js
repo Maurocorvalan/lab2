@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Paciente = require("../models/paciente");
+const auditoriaController = require("../routes/AuditoriaRuta");
 
 router.get("/ingresar-paciente", (req, res) => {
   res.render("ingresarPaciente", { paciente: null, mensaje: null }); // Renderiza el formulario de ingreso de pacientes
@@ -85,7 +86,7 @@ router.get("/editar-paciente/:id", async (req, res) => {
     res.status(500).send("Error al seleccionar paciente para edición.");
   }
 });
-
+// Ruta para procesar la creación o actualización de pacientes
 router.post("/guardar-paciente", async (req, res) => {
   try {
     const {
@@ -101,10 +102,20 @@ router.post("/guardar-paciente", async (req, res) => {
       diagnostico,
     } = req.body;
 
+    // Verifica que req.user esté definido y tiene dataValues
+    if (!req.user || !req.user.dataValues) {
+      return res
+        .status(401)
+        .send("Usuario no autenticado o datos de usuario no disponibles.");
+    }
+
+    const usuarioId = req.user.dataValues.id_Usuario;
+
     // Consultar si el paciente ya existe por su DNI
     const existingPaciente = await Paciente.findOne({ where: { dni } });
 
     if (existingPaciente) {
+      // Actualiza los datos del paciente existente
       await existingPaciente.update({
         nombre,
         apellido,
@@ -123,10 +134,18 @@ router.post("/guardar-paciente", async (req, res) => {
         apellido,
         dni
       );
-      // Redirigir a la página de generación de orden con el id_paciente
+
+      // Registro de auditoría
+      await auditoriaController.registrar(
+        usuarioId,
+        "Actualización de Paciente",
+        `Actualización de datos del paciente con DNI: ${dni}`
+      );
+
+      // Redirigir a la página de generación de orden
       res.redirect("/orden/generacion-orden");
     } else {
-      // Agregar fecha_registro al crear un nuevo paciente
+      // Crea un nuevo paciente
       const newPaciente = await Paciente.create({
         nombre,
         apellido,
@@ -146,13 +165,19 @@ router.post("/guardar-paciente", async (req, res) => {
         apellido,
         dni
       );
-      const dniPaciente = req.body.dni;
 
-      // Redirigir a la página de generación de orden con el id_paciente
+      // Registro de auditoría
+      await auditoriaController.registrar(
+        usuarioId,
+        "Creación de Paciente",
+        `Creación de un nuevo paciente con DNI: ${dni}`
+      );
+
+      // Redirigir a la página de generación de orden
       res.redirect("/orden/generacion-orden");
     }
   } catch (error) {
-    console.error(error);
+    console.error("Error al guardar el paciente:", error);
     res.status(500).send("Error al guardar el paciente en la base de datos.");
   }
 });
