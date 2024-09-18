@@ -1,0 +1,105 @@
+extends layout
+
+block content
+  head
+    title Auditorías
+
+  div.container.margin-top-custom
+    h1 Auditorías
+
+    //- Filtro por fecha
+    form#filterForm(action="/admin/auditoria" method="get")
+      .form-group
+        label(for="fechaInicio") Filtrar por fecha
+        input#fechaInicio.form-control(type="date", name="fechaInicio", value=(fechaInicio || ''))
+
+      .form-group
+        label(for="descripcion") Buscar por descripción
+        input#descripcion.form-control(type="text", name="descripcion", value=(descripcion || ''), placeholder="Escribe una descripción...")
+
+      //- Botón Filtrar para casos donde el usuario no quiera filtrado en tiempo real
+      button.btn.btn-primary(type="submit") Filtrar
+
+    //- Tabla para mostrar las auditorías
+    table.table.table-striped
+      thead
+        tr
+          th Fecha y Hora
+          th Usuario
+          th Operación
+          th Detalles
+      tbody
+        each auditoria in auditorias
+          tr
+            td= auditoria.Fecha_Hora_Operacion.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
+            td= auditoria.Usuario ? auditoria.Usuario.Nombre_Usuario : 'Desconocido'
+            td= auditoria.Operacion_Realizada
+            td= auditoria.Detalles_Adicionales
+
+    //- Paginación
+    if totalPages > 1
+      nav
+        ul.pagination
+          if currentPage > 1
+            li.page-item
+              a.page-link(href=`?page=${currentPage - 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}`) « Anterior
+          else
+            li.page-item.disabled
+              span.page-link « Anterior
+          each page in Array(totalPages).fill().map((_, i) => i + 1)
+            if page === currentPage
+              li.page-item.active
+                span.page-link= page
+            else
+              li.page-item
+                a.page-link(href=`?page=${page}&fechaInicio=${fechaInicio}&descripcion=${descripcion}`)= page
+          if currentPage < totalPages
+            li.page-item
+              a.page-link(href=`?page=${currentPage + 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}`) Siguiente »
+          else
+            li.page-item.disabled
+              span.page-link Siguiente »
+
+    //- Mensaje para errores o advertencias
+    div#mensaje
+
+    //- Incluye la librería Axios
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js")
+
+    //- Script para la búsqueda dinámica de descripción
+    script.
+      document.addEventListener('DOMContentLoaded', function() {
+        const descripcionInput = document.getElementById('descripcion');
+        descripcionInput.addEventListener('input', async function() {
+          const descripcion = descripcionInput.value.trim();
+          try {
+            // Llama a la ruta sin la descripción si el campo está vacío
+            const response = await axios.get('/admin/auditoria/buscar', {
+              params: { descripcion: descripcion === '' ? undefined : descripcion }
+            });
+            const auditorias = response.data;
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            if (auditorias && Array.isArray(auditorias)) {
+              auditorias.forEach(auditoria => {
+                const row = `
+                  <tr>
+                    <td>${new Date(auditoria.Fecha_Hora_Operacion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                    <td>${auditoria.Usuario ? auditoria.Usuario.Nombre_Usuario : 'Desconocido'}</td>
+                    <td>${auditoria.Operacion_Realizada}</td>
+                    <td>${auditoria.Detalles_Adicionales}</td>
+                  </tr>
+                `;
+                tbody.innerHTML += row;
+              });
+              document.getElementById('mensaje').innerHTML = ''; // Limpiar mensaje
+            } else {
+              document.getElementById('mensaje').innerHTML = 'No se encontraron resultados.';
+            }
+          } catch (error) {
+            console.error("Error al filtrar auditorías", error);
+            document.getElementById('mensaje').innerHTML = 'Ocurrió un error al buscar las auditorías.';
+          }
+        });
+      });

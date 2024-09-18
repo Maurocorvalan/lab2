@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database"); // Asegúrate de que esta ruta sea correcta
+const Usuario = require("./User.js"); // Asegúrate de que esta ruta sea correcta
 
 const Auditoria = sequelize.define(
   "Auditoria",
@@ -19,5 +20,6 @@ const Auditoria = sequelize.define(
     timestamps: false,
   }
 );
+Auditoria.belongsTo(Usuario, { foreignKey: "id_Usuario" });
 
 module.exports = Auditoria;

@@ -12,6 +12,7 @@ const modificarExamenRuta = require("./routes/modificarExamenRuta");
 const modificarDeterminacionRuta = require("./routes/modificarDeterminacionRuta");
 const buscarOrdenesRuta = require("./routes/buscarOrdenesRuta");
 const modificarValrefRuta = require("./routes/modificarValrefRuta");
+const auditoriaController = require("./routes/AuditoriaRuta");
 const muestrasRouter = require("./routes/resultadosRuta");
 const flash = require("connect-flash");
 const passport = require("passport");
@@ -278,7 +279,64 @@ app.get("/admin/crear-usuario", (req, res) => {
     res.status(403).send("Acceso no autorizado");
   }
 });
+// Ruta GET para la vista de auditoria
+app.get("/admin/auditoria", async (req, res) => {
+  if (req.isAuthenticated() && req.user.rol === "admin") {
+    const { fechaInicio, descripcion, page = 1 } = req.query;
+    const limit = 15; // Cantidad de auditorías por página
+    const offset = (page - 1) * limit;
 
+    try {
+      // Llamar a la función listarAuditorias pasando los filtros
+      const { auditorias, totalPages } =
+        await auditoriaController.listarAuditorias({
+          fechaInicio,
+          descripcion,
+          limit,
+          offset,
+        });
+
+      res.render("auditoria", {
+        auditorias,
+        totalPages,
+        currentPage: parseInt(page),
+        fechaInicio, // Añadir los parámetros de búsqueda a la vista
+        descripcion,
+      });
+    } catch (error) {
+      res.status(500).send("Error al obtener auditorías");
+    }
+  } else {
+    res.status(403).send("Acceso no autorizado");
+  }
+});
+
+// Ruta para la búsqueda dinámica por descripción
+app.get("/admin/auditoria/buscar", async (req, res) => {
+  if (req.isAuthenticated() && req.user.rol === "admin") {
+    const { descripcion } = req.query;
+    try {
+      // Si la descripción está vacía, retorna todas las auditorías
+      if (!descripcion || descripcion.trim() === "") {
+        const auditorias = await auditoriaController.listarAuditorias({
+          limit: 1000,
+          offset: 0,
+        }); // Ajusta el límite según tus necesidades
+        return res.json(auditorias.auditorias); // No incluye la paginación
+      }
+
+      // Busca auditorías por descripción
+      const auditorias = await auditoriaController.buscarPorDescripcion(
+        descripcion
+      );
+      res.json(auditorias);
+    } catch (error) {
+      res.status(500).send("Error al obtener auditorías");
+    }
+  } else {
+    res.status(403).send("Acceso no autorizado");
+  }
+});
 // Ruta GET para la vista de actualización de usuario para administrador
 app.get("/admin/actualizarUsuarioAdm", (req, res) => {
   if (req.isAuthenticated() && req.user.rol === "admin") {
