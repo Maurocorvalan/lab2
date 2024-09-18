@@ -1,6 +1,6 @@
 const Auditoria = require("../models/auditoria"); // Asegúrate de que esta ruta sea correcta
 const { Op } = require("sequelize");
-const Usuario = require('../models/User');
+const Usuario = require("../models/User");
 
 const auditoriaController = {
   // Registrar una nueva auditoría
@@ -18,9 +18,10 @@ const auditoriaController = {
     }
   },
 
- // Método para recuperar auditorías con filtros opcionales
- listarAuditorias: async (filtros) => {
-    const { fechaInicio, fechaFin, descripcion, limit, offset } = filtros;
+  // Método para recuperar auditorías con filtros opcionales
+  listarAuditorias: async (filtros) => {
+    const { fechaInicio, fechaFin, descripcion, usuario, limit, offset } =
+      filtros;
     const where = {};
 
     // Filtros de fecha
@@ -37,6 +38,21 @@ const auditoriaController = {
       };
     }
 
+    // Filtro de usuario
+    if (usuario) {
+      const usuarios = await Usuario.findAll({
+        where: {
+          [Op.or]: [
+            { nombre_usuario: { [Op.like]: `%${usuario}%` } },
+            { correo_electronico: { [Op.like]: `%${usuario}%` } },
+          ],
+        },
+      });
+      where.id_Usuario = {
+        [Op.in]: usuarios.map((user) => user.id_Usuario),
+      };
+    }
+
     try {
       const { count, rows: auditorias } = await Auditoria.findAndCountAll({
         where,
@@ -45,12 +61,12 @@ const auditoriaController = {
         include: [
           {
             model: Usuario,
-            attributes: ['Nombre_Usuario'],
-          }
+            attributes: ["nombre_usuario", "correo_electronico"],
+          },
         ],
       });
 
-      const totalPages = Math.ceil(count / limit); // Calcular el total de páginas
+      const totalPages = Math.ceil(count / limit);
 
       return { auditorias, totalPages };
     } catch (error) {
@@ -71,8 +87,8 @@ const auditoriaController = {
         include: [
           {
             model: Usuario,
-            attributes: ['Nombre_Usuario'],
-          }
+            attributes: ["Nombre_Usuario"],
+          },
         ],
       });
 
@@ -81,7 +97,7 @@ const auditoriaController = {
       console.error("Error al buscar auditorías por descripción:", error);
       throw error;
     }
-  }
+  },
 };
 
 module.exports = auditoriaController;

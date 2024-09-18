@@ -17,7 +17,10 @@ block content
         label(for="descripcion") Buscar por descripción
         input#descripcion.form-control(type="text", name="descripcion", value=(descripcion || ''), placeholder="Escribe una descripción...")
 
-      //- Botón Filtrar para casos donde el usuario no quiera filtrado en tiempo real
+      .form-group
+        label(for="usuario") Filtrar por usuario
+        input#usuario.form-control(type="text", name="usuario", value=(usuario || ''), placeholder="Escribe el nombre o email del usuario...")
+
       button.btn.btn-primary(type="submit") Filtrar
 
     //- Tabla para mostrar las auditorías
@@ -26,15 +29,17 @@ block content
         tr
           th Fecha y Hora
           th Usuario
+          th Correo Electrónico
           th Operación
           th Detalles
       tbody
         each auditoria in auditorias
           tr
             td= auditoria.Fecha_Hora_Operacion.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
-            td= auditoria.Usuario ? auditoria.Usuario.Nombre_Usuario : 'Desconocido'
+            td= auditoria.Usuario ? auditoria.Usuario.nombre_usuario : 'Desconocido'
+            td= auditoria.Usuario ? auditoria.Usuario.correo_electronico : 'Desconocido'
             td= auditoria.Operacion_Realizada
-            td= auditoria.Detalles_Adicionales
+            td= auditoria.Detalles_Adicionales || 'No disponible'
 
     //- Paginación
     if totalPages > 1
@@ -42,7 +47,7 @@ block content
         ul.pagination
           if currentPage > 1
             li.page-item
-              a.page-link(href=`?page=${currentPage - 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}`) « Anterior
+              a.page-link(href=`/admin/auditoria?page=${currentPage - 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}&usuario=${usuario}`) « Anterior
           else
             li.page-item.disabled
               span.page-link « Anterior
@@ -52,10 +57,10 @@ block content
                 span.page-link= page
             else
               li.page-item
-                a.page-link(href=`?page=${page}&fechaInicio=${fechaInicio}&descripcion=${descripcion}`)= page
+                a.page-link(href=`/admin/auditoria?page=${page}&fechaInicio=${fechaInicio}&descripcion=${descripcion}&usuario=${usuario}`)= page
           if currentPage < totalPages
             li.page-item
-              a.page-link(href=`?page=${currentPage + 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}`) Siguiente »
+              a.page-link(href=`/admin/auditoria?page=${currentPage + 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}&usuario=${usuario}`) Siguiente »
           else
             li.page-item.disabled
               span.page-link Siguiente »
@@ -87,8 +92,9 @@ block content
                   <tr>
                     <td>${new Date(auditoria.Fecha_Hora_Operacion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</td>
                     <td>${auditoria.Usuario ? auditoria.Usuario.Nombre_Usuario : 'Desconocido'}</td>
+                    <td>${auditoria.Usuario ? auditoria.Usuario.correo_electronico : 'Desconocido'}</td>
                     <td>${auditoria.Operacion_Realizada}</td>
-                    <td>${auditoria.Detalles_Adicionales}</td>
+                    <td>${auditoria.Detalles_Adicionales || 'No disponible'}</td>
                   </tr>
                 `;
                 tbody.innerHTML += row;

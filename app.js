@@ -282,16 +282,16 @@ app.get("/admin/crear-usuario", (req, res) => {
 // Ruta GET para la vista de auditoria
 app.get("/admin/auditoria", async (req, res) => {
   if (req.isAuthenticated() && req.user.rol === "admin") {
-    const { fechaInicio, descripcion, page = 1 } = req.query;
-    const limit = 15; // Cantidad de auditorías por página
+    const { fechaInicio, descripcion, usuario, page = 1 } = req.query;
+    const limit = 15;
     const offset = (page - 1) * limit;
 
     try {
-      // Llamar a la función listarAuditorias pasando los filtros
       const { auditorias, totalPages } =
         await auditoriaController.listarAuditorias({
           fechaInicio,
           descripcion,
+          usuario,
           limit,
           offset,
         });
@@ -300,10 +300,12 @@ app.get("/admin/auditoria", async (req, res) => {
         auditorias,
         totalPages,
         currentPage: parseInt(page),
-        fechaInicio, // Añadir los parámetros de búsqueda a la vista
+        fechaInicio,
         descripcion,
+        usuario,
       });
     } catch (error) {
+      console.error("Error al obtener auditorías:", error);
       res.status(500).send("Error al obtener auditorías");
     }
   } else {
