@@ -22,13 +22,15 @@ router.get("/modificar-determinacion", async (req, res) => {
 // Ruta para procesar la búsqueda de determinaciones según el id_examen
 router.post("/buscar-determinacion", async (req, res) => {
   try {
-    const { id_examen } = req.body;
+    const { codigo, nombre_examen } = req.body;
 
-    // Verifica si se proporcionó un ID de examen en el formulario
-    if (!id_examen) {
+    // Verifica que se haya proporcionado al menos un criterio de búsqueda
+    if (!codigo && !nombre_examen) {
       return res
         .status(400)
-        .send("Debe proporcionar un ID de examen para realizar la búsqueda.");
+        .send(
+          "Debe proporcionar el código o nombre del examen para realizar la búsqueda."
+        );
     }
 
     // Verifica que req.user esté definido y tiene dataValues
@@ -40,21 +42,36 @@ router.post("/buscar-determinacion", async (req, res) => {
 
     const usuarioId = req.user.dataValues.id_Usuario;
 
-    // Realiza la búsqueda de las determinaciones según el id_examen en la base de datos
+    // Buscar el examen por código o nombre del examen
+    let examen;
+    if (codigo) {
+      examen = await Examen.findOne({ where: { codigo } });
+    } else if (nombre_examen) {
+      examen = await Examen.findOne({ where: { nombre_examen } });
+    }
+
+    // Si no se encuentra el examen, muestra un mensaje
+    if (!examen) {
+      return res.render("buscarModificarDeterminacion", {
+        error: "Examen no encontrado",
+        determinacionesEncontradas: null,
+      });
+    }
+
+    // Buscar determinaciones asociadas al examen encontrado
     const determinacionesEncontradas = await Determinacion.findAll({
-      where: { id_examen: id_examen },
+      where: { id_examen: examen.id_examen },
     });
 
-    // Registro de auditoría
-    await auditoriaController.registrar(
-      usuarioId, // usuarioId
-      "Búsqueda de Determinaciones", // operación
-      `Búsqueda de determinaciones para el examen con ID: ${id_examen}` // detalles
-    );
 
-    // Renderiza la misma página con la información de las determinaciones encontradas o un mensaje si no se encuentran
+
+    // Renderizar la página con las determinaciones encontradas o un mensaje si no se encuentran
     res.render("buscarModificarDeterminacion", {
       determinacionesEncontradas,
+      error:
+        determinacionesEncontradas.length === 0
+          ? "No se encontraron determinaciones."
+          : null,
     });
   } catch (error) {
     console.error("Error al procesar la búsqueda de determinaciones:", error);

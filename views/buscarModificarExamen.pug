@@ -10,8 +10,15 @@ block content
     form(action="/modificar-examen/buscar-modificar-examen" method="post" class="mb-4")
       div.form-group
         label(for="codigo") Código del Examen:
-        input(type="text" name="codigo" required class="form-control")
+        input(type="text" name="codigo" class="form-control")
+      div.form-group
+        label(for="nombre_examen") Nombre del Examen:
+        input(type="text" name="nombre_examen" class="form-control")
       button(type="submit" class="btn btn-primary") Buscar Examen
+
+    //- Mostrar mensaje de error si no se encuentra el examen
+    if error
+      div.alert.alert-danger #{error}
 
     if examen
       h2 Examen Encontrado

@@ -7,11 +7,14 @@ block content
   .container
     h1(class="margin-top-custom") Buscar y Modificar Determinación
 
-    // Formulario de búsqueda por id_examen
+    // Formulario de búsqueda por código o nombre del examen
     form(action="/modificar-determinacion/buscar-determinacion" method="post" class="mt-4")
       div.form-group
-        label(for="id_examen") ID del Examen:
-        input(type="text" name="id_examen" class="form-control", required)
+        label(for="codigo") Código del Examen:
+        input(type="text" name="codigo" class="form-control")
+      div.form-group
+        label(for="nombre_examen") Nombre del Examen:
+        input(type="text" name="nombre_examen" class="form-control")
       button(type="submit" class="btn btn-primary") Buscar Determinaciones
 
     // Mostrar resultados de búsqueda si los hay
@@ -48,4 +51,4 @@ block content
                   button(type="submit" class="btn btn-primary" onclick="return confirm('¿Estás seguro de modificar la determinacion?')") Cambiar Estado
 
     else
-      p(class="mt-4") No se encontraron determinaciones para el ID de examen proporcionado.
+      p(class="mt-4") No se encontraron determinaciones para los criterios proporcionados.

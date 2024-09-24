@@ -19,28 +19,35 @@ router.get("/buscar-modificar-examen", async (req, res) => {
 // Ruta para procesar la búsqueda y mostrar el formulario de modificación
 router.post("/buscar-modificar-examen", async (req, res) => {
   try {
-    const { codigo } = req.body;
+    const { codigo, nombre_examen } = req.body;
 
     // Verifica que req.user esté definido y tiene dataValues
     if (!req.user || !req.user.dataValues) {
-      return res.status(401).send("Usuario no autenticado o datos de usuario no disponibles.");
+      return res
+        .status(401)
+        .send("Usuario no autenticado o datos de usuario no disponibles.");
     }
 
     const usuarioId = req.user.dataValues.id_Usuario;
 
-    // Buscar el examen por código en lugar de ID
-    const examen = await Examen.findOne({ where: { codigo } });
+    let examen;
 
-    if (!examen) {
-      return res.status(404).send("Examen no encontrado");
+    // Buscar el examen por código si se ha proporcionado
+    if (codigo) {
+      examen = await Examen.findOne({ where: { codigo } });
+    }
+    // Si no se ha proporcionado un código, buscar por nombre del examen
+    else if (nombre_examen) {
+      examen = await Examen.findOne({ where: { nombre_examen } });
     }
 
-    // Registro de auditoría
-    await auditoriaController.registrar(
-      usuarioId, // usuarioId
-      "Búsqueda de Examen", // operación
-      `Búsqueda del examen con código: ${codigo}` // detalles
-    );
+    if (!examen) {
+      // Enviar el mensaje de "Examen no encontrado" en lugar de devolver un error
+      return res.render("buscarModificarExamen", {
+        error: "Examen no encontrado",
+        examen: null,
+      });
+    }
 
     res.render("buscarModificarExamen", { examen });
   } catch (error) {
@@ -56,7 +63,9 @@ router.post("/modificar", async (req, res) => {
 
     // Verifica que req.user esté definido y tiene dataValues
     if (!req.user || !req.user.dataValues) {
-      return res.status(401).send("Usuario no autenticado o datos de usuario no disponibles.");
+      return res
+        .status(401)
+        .send("Usuario no autenticado o datos de usuario no disponibles.");
     }
 
     const usuarioId = req.user.dataValues.id_Usuario;
@@ -92,6 +101,5 @@ router.post("/modificar", async (req, res) => {
     res.status(500).send("Error al modificar el examen.");
   }
 });
-
 
 module.exports = router;

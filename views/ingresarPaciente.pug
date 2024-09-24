@@ -55,3 +55,6 @@ block content
             input#diagnostico.form-control(type="text" name="diagnostico", value=`${paciente ? paciente.diagnostico : ''}`)
 
           button#guardar-btn.btn.btn-primary(type="submit") Guardar Datos
+        if paciente
+          form#eliminar-form(action=`/eliminar-paciente/${paciente.dni}` method="post")
+            button#eliminar-btn.btn.btn-danger(type="submit") Eliminar paciente

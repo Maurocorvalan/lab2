@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Paciente = require("../models/paciente");
+const Usuarios = require("../models/User");
+const bcrypt = require("bcrypt");
 const auditoriaController = require("../routes/AuditoriaRuta");
 
 router.get("/ingresar-paciente", (req, res) => {
@@ -87,6 +89,7 @@ router.get("/editar-paciente/:id", async (req, res) => {
   }
 });
 // Ruta para procesar la creación o actualización de pacientes
+
 router.post("/guardar-paciente", async (req, res) => {
   try {
     const {
@@ -102,7 +105,6 @@ router.post("/guardar-paciente", async (req, res) => {
       diagnostico,
     } = req.body;
 
-    // Verifica que req.user esté definido y tiene dataValues
     if (!req.user || !req.user.dataValues) {
       return res
         .status(401)
@@ -141,9 +143,6 @@ router.post("/guardar-paciente", async (req, res) => {
         "Actualización de Paciente",
         `Actualización de datos del paciente con DNI: ${dni}`
       );
-
-      // Redirigir a la página de generación de orden
-      res.redirect("/orden/generacion-orden");
     } else {
       // Crea un nuevo paciente
       const newPaciente = await Paciente.create({
@@ -157,7 +156,7 @@ router.post("/guardar-paciente", async (req, res) => {
         genero,
         embarazo,
         diagnostico,
-        fecha_registro: new Date(), // La fecha de registro es la fecha y hora actual
+        fecha_registro: new Date(),
       });
       console.log(
         "Datos del paciente guardados con éxito:",
@@ -173,13 +172,60 @@ router.post("/guardar-paciente", async (req, res) => {
         `Creación de un nuevo paciente con DNI: ${dni}`
       );
 
-      // Redirigir a la página de generación de orden
-      res.redirect("/orden/generacion-orden");
+      // Crear el nuevo usuario vinculado al paciente
+      const hashedPassword = await bcrypt.hash(dni, 10); // Encriptar el DNI como contraseña
+
+      const newUsuario = await Usuarios.create({
+        nombre_usuario: `${nombre} ${apellido}`,
+        rol: "paciente", // Definir el rol como paciente
+        correo_electronico: email,
+        password: hashedPassword, // Guardar la contraseña encriptada
+      });
+
+      console.log("Usuario creado con éxito:", newUsuario.nombre_usuario);
     }
+
+    // Redirigir a la página de generación de orden
+    res.redirect("/orden/generacion-orden");
   } catch (error) {
-    console.error("Error al guardar el paciente:", error);
-    res.status(500).send("Error al guardar el paciente en la base de datos.");
+    console.error("Error al guardar el paciente o usuario:", error);
+    res
+      .status(500)
+      .send("Error al guardar el paciente o usuario en la base de datos.");
   }
 });
+// Eliminar paciente y usuario por DNI
+router.post("/eliminar-paciente/:dni", async (req, res) => {
+  const { dni } = req.params;
 
+  try {
+    // Buscar al paciente por DNI
+    const paciente = await Paciente.findOne({ where: { dni } });
+
+    if (!paciente) {
+      return res.status(404).send("Paciente no encontrado.");
+    }
+
+    // Buscar al usuario por email o cualquier otro campo asociado
+    const usuario = await Usuarios.findOne({
+      where: { correo_electronico: paciente.email },
+    });
+
+    // Eliminar el paciente
+    await paciente.destroy();
+    console.log(`Paciente con DNI ${dni} eliminado.`);
+
+    // Eliminar el usuario asociado si existe
+    if (usuario) {
+      await usuario.destroy();
+      console.log(`Usuario con email ${paciente.email} eliminado.`);
+    }
+
+    // Redirigir o enviar respuesta de éxito
+    res.redirect("/tecnico"); // Redirigir a la lista de pacientes u otra página adecuada
+  } catch (error) {
+    console.error("Error al eliminar el paciente o usuario:", error);
+    res.status(500).send("Error al eliminar el paciente o usuario.");
+  }
+});
 module.exports = router;
