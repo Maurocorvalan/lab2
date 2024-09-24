@@ -467,5 +467,44 @@ WHERE
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
+// Ruta para actualizar el estado de una orden a "Informada"
+router.post("/actualizarEstadoOrden/:id_orden/informada", async (req, res) => {
+  const id_orden = req.params.id_orden;
+  console.log("ID de Orden Capturado:", id_orden);
+
+  // Verificar que el usuario está autenticado
+  if (!req.user || !req.user.dataValues) {
+    return res
+      .status(401)
+      .send("Usuario no autenticado o datos de usuario no disponibles.");
+  }
+
+  const usuarioId = req.user.dataValues.id_Usuario;
+
+  try {
+    // Actualizar el estado de la orden a "Informada"
+    await Orden.update(
+      { estado: "Informada" },
+      {
+        where: { id_Orden: id_orden },
+      }
+    );
+
+    // Registrar auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Actualizar Estado de Orden",
+      `Orden con ID: ${id_orden} actualizada a "Informada"`
+    );
+
+    req.flash("success_msg", 'Orden actualizada a "Informada"');
+    console.log("Orden actualizada a 'Informada'");
+    res.redirect(`/muestras/detalleOrden/${id_orden}`); // Redirigir a la vista de detalles de la orden
+  } catch (error) {
+    console.error("Error al actualizar el estado de la orden:", error);
+    req.flash("error_msg", "Error al actualizar el estado de la orden.");
+    res.redirect(`/muestras/detalleOrden/${id_orden}`); // Redirigir en caso de error
+  }
+});
 
 module.exports = router;

@@ -13,8 +13,8 @@ block content
           .logo
             img(src='/public/img/medico.avif' alt='Logo' height='200px')
           .lab-info
-            h2 Empresa Pruebas, S.A. de C.V
-            p Calle # 762C, Tel: 54 (266) 4792991
+            h2 Medical HealthCare
+            p Calle Bolivar 762, Tel: 54 (266) 4792991
             p San Luis, Argentina
 
       .order-info
@@ -56,12 +56,10 @@ block content
                 th Edad del Paciente
             tbody
               each muestra in ordenes[0].muestras
-                - // Función para extraer solo los números
                 - const valorFinalNumerico = parseFloat(muestra.valor_final.replace(/[^\d.-]/g, '')) || 0;
                 - const valorMaximoNumerico = parseFloat(muestra.Valor_Referencia_Maximo.replace(/[^\d.-]/g, '')) || 0;
                 tr
                   td #{muestra.Nombre_Determinacion || 'N/A'}
-                  // Comparar valor_final con Valor_Referencia_Maximo
                   if valorFinalNumerico > valorMaximoNumerico
                     td(style='color:red; font-weight:bold' ) #{muestra.valor_final || 'N/A'}
                   else
@@ -79,6 +77,11 @@ block content
         p A T E N T A M E N T E
         p #{usuarioLogueado || 'Desconocido'}
         p Responsable Sanitario
+
+    // Botón para informar el estado de la orden
+    .text-center
+      form(action=`/muestras/actualizarEstadoOrden/${ordenes[0].id_Orden}/informada`, method='POST')
+        button.btn.btn-success.btn-lg(type="submit") Marcar como Informada
 
     // Botón para generar e imprimir el PDF con estilos de Bootstrap
     .text-center
