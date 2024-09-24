@@ -146,7 +146,6 @@ router.get(
   }
 );
 
-
 // Ruta para añadir un resultado
 router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
   const id_muestra = req.params.id_muestra;
@@ -292,89 +291,90 @@ router.get("/detalleOrden/:id_orden", async (req, res) => {
   const idUsuario = req.user ? req.user.id_Usuario : null; // Asumiendo que la ID del usuario está en req.user
 
   const query = `
-    WITH GeneroPaciente AS (
-        SELECT
-            ot.id_Orden,
-            p.genero,
-            p.fecha_nacimiento,
-            p.nombre,
-            p.apellido,
-            p.dni,
-            p.email,
-            p.telefono,
-            p.direccion,
-            p.embarazo,
-            p.diagnostico,
-            p.fecha_registro
-        FROM
-            ordenes_trabajo ot
-        JOIN
-            pacientes p ON ot.id_Paciente = p.id_Paciente
-        WHERE
-            ot.id_Orden = :idOrden
-    ),
-    EdadPaciente AS (
-        SELECT
-            id_Orden,
-            genero,
-            fecha_nacimiento,
-            TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
-            nombre,
-            apellido,
-            dni,
-            email,
-            telefono,
-            direccion,
-            embarazo,
-            diagnostico,
-            fecha_registro
-        FROM
-            GeneroPaciente
-    )
+WITH GeneroPaciente AS (
     SELECT
         ot.id_Orden,
-        ot.id_Paciente,
-        ot.dni,
-        ot.Fecha_Creacion,
-        ot.Fecha_Entrega,
-        ot.estado AS estado_orden,
-        r.id_Resultado,
-        r.id_Muestra,
-        r.id_Determinacion,
-        r.valor_final,
-        r.fecha_resultado,
-        d.Nombre_Determinacion,
-        vr.id_ValorReferencia,
-        vr.Valor_Referencia_Minimo,
-        vr.Valor_Referencia_Maximo,
-        vr.Sexo,
-        vr.Edad_Minima,
-        vr.Edad_Maxima,
-        ep.edad,
-        ep.nombre,
-        ep.apellido,
-        ep.dni,
-        ep.email,
-        ep.telefono,
-        ep.direccion,
-        ep.embarazo,
-        ep.diagnostico,
-        ep.fecha_registro,
-        ep.fecha_nacimiento
+        p.genero,
+        p.fecha_nacimiento,
+        p.nombre,
+        p.apellido,
+        p.dni,
+        p.email,
+        p.telefono,
+        p.direccion,
+        p.embarazo,
+        p.diagnostico,
+        p.fecha_registro
     FROM
         ordenes_trabajo ot
     JOIN
-        resultados r ON ot.id_Orden = r.id_Orden
-    JOIN
-        determinaciones d ON r.id_determinacion = d.id_determinacion
-    JOIN
-        valoresReferencia vr ON d.id_determinacion = vr.id_Determinacion
-    JOIN
-        EdadPaciente ep ON ot.id_Orden = ep.id_Orden
+        pacientes p ON ot.id_Paciente = p.id_Paciente
     WHERE
-        ep.genero IN ('M', 'F') AND
-        vr.Sexo = ep.genero AND
-        (ep.edad BETWEEN vr.Edad_Minima AND vr.Edad_Maxima );
+        ot.id_Orden = :idOrden
+),
+EdadPaciente AS (
+    SELECT
+        id_Orden,
+        genero,
+        fecha_nacimiento,
+        TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
+        nombre,
+        apellido,
+        dni,
+        email,
+        telefono,
+        direccion,
+        embarazo,
+        diagnostico,
+        fecha_registro
+    FROM
+        GeneroPaciente
+)
+SELECT
+    ot.id_Orden,
+    ot.id_Paciente,
+    ot.dni,
+    ot.Fecha_Creacion,
+    ot.Fecha_Entrega,
+    ot.estado AS estado_orden,
+    r.id_Resultado,
+    r.id_Muestra,
+    r.id_Determinacion,
+    r.valor_final,
+    r.fecha_resultado,
+    d.Nombre_Determinacion,
+    vr.id_ValorReferencia,
+    vr.Valor_Referencia_Minimo,
+    vr.Valor_Referencia_Maximo,
+    vr.Sexo,
+    vr.Edad_Minima,
+    vr.Edad_Maxima,
+    ep.edad,
+    ep.nombre,
+    ep.apellido,
+    ep.dni,
+    ep.email,
+    ep.telefono,
+    ep.direccion,
+    ep.embarazo,
+    ep.diagnostico,
+    ep.fecha_registro,
+    ep.fecha_nacimiento
+FROM
+    ordenes_trabajo ot
+JOIN
+    resultados r ON ot.id_Orden = r.id_Orden
+JOIN
+    determinaciones d ON r.id_determinacion = d.id_determinacion
+JOIN
+    valoresReferencia vr ON d.id_determinacion = vr.id_Determinacion
+JOIN
+    EdadPaciente ep ON ot.id_Orden = ep.id_Orden
+WHERE
+    (ep.genero IN ('M', 'F', 'masculino', 'femenino')) AND
+    (vr.Sexo IN ('M', 'F', 'masculino', 'femenino')) AND
+    (ep.edad BETWEEN vr.Edad_Minima AND vr.Edad_Maxima);
+
   `;
 
   // Funciones de formato
