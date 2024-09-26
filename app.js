@@ -161,21 +161,36 @@ app.use(
 );
 app.use("/muestras", muestrasRouter);
 
-// Ruta GET para la vista de inicio de sesión
-app.get("/", (req, res) => {
-  res.render("login");
+// Ruta de inicio de sesión
+app.get('/login', (req, res) => {
+  if (req.isAuthenticated()) {
+    // Si ya está autenticado, redirige a la ruta correspondiente según su rol
+    return res.redirect('/redirigirUsuario');
+  } else {
+    // Si no está autenticado, muestra la vista de login
+    res.render('login');
+  }
+});
+
+// Ruta principal
+app.get('/', (req, res) => {
+  if (!req.isAuthenticated()) {
+    // Si no está autenticado, redirige a la página de login
+    return res.redirect('/login');
+  }
+  // Si está autenticado, redirige a su vista correspondiente
+  return res.redirect('/redirigirUsuario');
 });
 
 // Ruta POST para el inicio de sesión con Passport.js
-app.post("/login", (req, res, next) => {
-  passport.authenticate("local", { session: true }, (err, user, info) => {
+app.post('/login', (req, res, next) => {
+  passport.authenticate('local', { session: true }, (err, user, info) => {
     if (err) {
       return next(err);
     }
     if (!user) {
-      const errorMessage =
-        "Email o contraseña incorrectos. Intente nuevamente.";
-      return res.render("login", { message: errorMessage });
+      const errorMessage = 'Email o contraseña incorrectos. Intente nuevamente.';
+      return res.render('login', { message: errorMessage });
     }
     req.logIn(user, (err) => {
       if (err) {
@@ -183,43 +198,44 @@ app.post("/login", (req, res, next) => {
       }
       const token = jwt.sign(
         { id: user.id_Usuario, rol: user.rol },
-        "messicrack"
+        'messicrack'
       );
       switch (user.rol) {
-        case "recepcionista":
-          return res.redirect("/recepcionista");
-        case "tecnico":
-          return res.redirect("/tecnico");
-        case "bioquimico":
-          return res.redirect("/bioquimico");
-        case "admin":
-          return res.redirect("/admin");
+        case 'recepcionista':
+          return res.redirect('/recepcionista');
+        case 'tecnico':
+          return res.redirect('/tecnico');
+        case 'bioquimico':
+          return res.redirect('/bioquimico');
+        case 'admin':
+          return res.redirect('/admin');
         default:
-          return res.status(403).send("Acceso no autorizado");
+          return res.status(403).send('Acceso no autorizado');
       }
     });
   })(req, res, next);
 });
 
 // Ruta GET para redirigir al usuario según su rol después del inicio de sesión
-app.get("/redirigirUsuario", (req, res) => {
+app.get('/redirigirUsuario', (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.redirect("/"); // Redirigir a la página de inicio de sesión si no está autenticado
+    return res.redirect('/login'); // Redirigir a la página de inicio de sesión si no está autenticado
   }
 
   switch (req.user.rol) {
-    case "recepcionista":
-      return res.redirect("/recepcionista");
-    case "tecnico":
-      return res.redirect("/tecnico");
-    case "bioquimico":
-      return res.redirect("/bioquimico");
-    case "admin":
-      return res.redirect("/admin");
+    case 'recepcionista':
+      return res.redirect('/recepcionista');
+    case 'tecnico':
+      return res.redirect('/tecnico');
+    case 'bioquimico':
+      return res.redirect('/bioquimico');
+    case 'admin':
+      return res.redirect('/admin');
     default:
-      return res.status(403).send("Acceso no autorizado");
+      return res.status(403).send('Acceso no autorizado');
   }
 });
+
 
 // Ruta GET para la vista de recepcionista
 app.get("/recepcionista", (req, res) => {

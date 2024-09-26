@@ -20,7 +20,7 @@ block content
       #resultList
         if ordenesTrabajo
           each orden in ordenesTrabajo 
-            .card.mb-3
+            .card.mb-3(style="height: 300px;") // Añadiendo el height aquí
               .card-body
                 ul.list-unstyled(id=`orden_${orden.id_Orden}`)
                   li Órden de Trabajo: #{orden.id_Orden}
@@ -67,6 +67,7 @@ block content
 
               const listItem = document.createElement("div");
               listItem.classList.add("card", "mb-3");
+              listItem.style.height = "200px"; // Añadiendo el height aquí
               listItem.innerHTML = `
                 <div class="card-body">
                   <ul class="list-unstyled" id="orden_${orden.id_Orden}">

@@ -62,6 +62,10 @@ body {
   font-weight: 700;
   color: #343a40;
 }
+.card {
+  height: 600px; /* Ajusta este valor según tus necesidades */
+  overflow-y: auto; /* Permite el scroll vertical */
+}
 
 .login-page .form-group label {
   font-weight: bold;
@@ -234,4 +238,54 @@ body {
     size: A4;
     margin: 10mm; /* Ajustar el margen si es necesario */
   }
+}
+@media print {
+  .report-container {
+    overflow: visible !important; 
+  }
+}
+.order-info, .report-details {
+  margin: 10px 0; /* Añade margen entre secciones */
+  padding: 10px;   /* Añade padding interno */
+  
+}
+.result-table {
+  width: 100%; /* Asegúrate de que la tabla use el ancho completo */
+  table-layout: auto; /* Fija el ancho de las columnas */
+}
+
+.result-table th, .result-table td {
+  word-wrap: break-word; /* Permite que las palabras se rompan si son demasiado largas */
+  padding: 4px;
+}
+#resultados_busqueda {
+  background-color: white; /* Fondo blanco */
+  border: 1px solid #ccc; /* Borde gris claro */
+  border-radius: 4px; /* Bordes redondeados */
+  max-height: 200px; /* Altura máxima */
+  overflow-y: auto; /* Scroll si es necesario */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  position: absolute; /* Para posicionar sobre el input */
+  z-index: 1000; /* Asegura que esté sobre otros elementos */
+  width: calc(100% - 2px); /* Ajustar el ancho al del input */
+  display: none; /* Oculto por defecto */
+}
+
+#lista_resultados {
+  list-style: none; /* Sin viñetas */
+  padding: 0; /* Sin padding */
+  margin: 0; /* Sin márgenes */
+}
+
+.resultado {
+  padding: 8px 12px; /* Espaciado interno */
+  cursor: pointer; /* Cursor de mano al pasar por encima */
+}
+
+.resultado:hover {
+  background-color: #f0f0f0; /* Fondo gris claro al pasar el mouse */
+}
+
+.resultado.selected {
+  background-color: #e0e0e0; /* Fondo gris más oscuro cuando está seleccionado */
 }

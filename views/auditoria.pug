@@ -9,9 +9,7 @@ block content
 
     //- Filtro por fecha
     form#filterForm(action="/admin/auditoria" method="get")
-      .form-group
-        label(for="fechaInicio") Filtrar por fecha
-        input#fechaInicio.form-control(type="date", name="fechaInicio", value=(fechaInicio || ''))
+
 
       .form-group
         label(for="descripcion") Buscar por descripción

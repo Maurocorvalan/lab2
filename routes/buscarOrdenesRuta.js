@@ -7,6 +7,7 @@ const Examen = require("../models/examen");
 const OrdenesExamen = require("../models/ordenes_examen");
 const auditoriaController = require("../routes/AuditoriaRuta");
 const { Op } = require("sequelize");
+const sequelize = require("../config/database");
 
 // Ruta para buscar un paciente y mostrar sus órdenes de trabajo
 router.get("/ordenes", (req, res) => {
@@ -297,5 +298,117 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
       .send("Error al procesar la cancelación de la orden de trabajo.");
   }
 });
+router.get("/ordenes/informadas", async (req, res) => {
+  try {
+    const ordenesInformadas = await sequelize.query(
+      `
+WITH GeneroPaciente AS (
+    SELECT
+        ot.id_Orden,
+        p.genero,
+        p.fecha_nacimiento,
+        p.nombre,
+        p.apellido,
+        p.dni,
+        p.email,
+        p.telefono,
+        p.direccion,
+        p.embarazo,
+        p.diagnostico,
+        p.fecha_registro
+    FROM
+        ordenes_trabajo ot
+    JOIN
+        pacientes p ON ot.id_Paciente = p.id_Paciente
+),
+EdadPaciente AS (
+    SELECT
+        id_Orden,
+        genero,
+        fecha_nacimiento,
+        TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
+        nombre,
+        apellido,
+        dni,
+        email,
+        telefono,
+        direccion,
+        embarazo,
+        diagnostico,
+        fecha_registro
+    FROM
+        GeneroPaciente
+)
+SELECT
+    ot.id_Orden,
+    ot.id_Paciente,
+    ot.dni,
+    ot.Fecha_Creacion,
+    ot.Fecha_Entrega,
+    ot.estado AS estado_orden,
+    MAX(r.id_Resultado) AS id_Resultado, -- Usar MAX o alguna otra función de agregación
+    MAX(r.id_Muestra) AS id_Muestra,
+    MAX(r.id_Determinacion) AS id_Determinacion,
+    MAX(r.valor_final) AS valor_final,
+    MAX(r.fecha_resultado) AS fecha_resultado,
+    MAX(d.Nombre_Determinacion) AS Nombre_Determinacion,
+    MAX(vr.id_ValorReferencia) AS id_ValorReferencia,
+    MAX(vr.Valor_Referencia_Minimo) AS Valor_Referencia_Minimo,
+    MAX(vr.Valor_Referencia_Maximo) AS Valor_Referencia_Maximo,
+    ep.edad,
+    ep.nombre,
+    ep.apellido,
+    ep.dni,
+    ep.email,
+    ep.telefono,
+    ep.direccion,
+    ep.embarazo,
+    ep.diagnostico,
+    ep.fecha_registro,
+    ep.fecha_nacimiento
+FROM
+    ordenes_trabajo ot
+JOIN
+    resultados r ON ot.id_Orden = r.id_Orden
+JOIN
+    determinaciones d ON r.id_determinacion = d.id_determinacion
+JOIN
+    valoresReferencia vr ON d.id_determinacion = vr.id_Determinacion
+JOIN
+    EdadPaciente ep ON ot.id_Orden = ep.id_Orden
+WHERE
+    ot.estado = 'informada' AND
+    (ep.genero IN ('M', 'F', 'masculino', 'femenino')) AND
+    (vr.Sexo IN ('M', 'F', 'masculino', 'femenino')) AND
+    (ep.edad BETWEEN vr.Edad_Minima AND vr.Edad_Maxima)
+GROUP BY
+    ot.id_Orden, 
+    ot.id_Paciente, 
+    ot.dni, 
+    ot.Fecha_Creacion, 
+    ot.Fecha_Entrega, 
+    ot.estado,
+    ep.edad,
+    ep.nombre,
+    ep.apellido,
+    ep.dni,
+    ep.email,
+    ep.telefono,
+    ep.direccion,
+    ep.embarazo,
+    ep.diagnostico,
+    ep.fecha_registro,
+    ep.fecha_nacimiento;
 
+    `,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    console.log("Órdenes informadas:", ordenesInformadas);
+    // Renderiza la vista pug con las órdenes informadas
+    res.render("ordenesInformadas", { ordenes: ordenesInformadas });
+  } catch (error) {
+    console.error("Error al obtener órdenes informadas:", error);
+    res.status(500).json({ error: "Error al obtener órdenes informadas" });
+  }
+});
 module.exports = router;

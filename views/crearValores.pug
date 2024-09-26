@@ -3,14 +3,24 @@ extends layout
 block content
   head
     title Crear Valores de Referencia
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js") // Asegúrate de incluir jQuery
 
   div.container.margin-top-custom
     h1 Crear Valores de Referencia
     
     form#crear-valores-form(action="/valoresreferencia/crear-valores" method="POST")
       div.form-group
-        label(for="id_Determinacion") Determinación:
-        select#id_Determinacion(name="id_Determinacion" class="form-control" required)
+        label(for="buscar_determinacion") Buscar Determinación:
+        input#buscar_determinacion(type="text" class="form-control" placeholder="Escribe para buscar..." autocomplete="off")
+
+        // Contenedor para mostrar resultados de búsqueda
+        div#resultados_busqueda(style="position: absolute; z-index: 1000; display: none;")
+          ul#lista_resultados(style="list-style: none; padding: 0; margin: 0;")
+            each determinacion in determinaciones
+              li(class="resultado" data-id=determinacion.id_Determinacion) #{determinacion.Nombre_Determinacion}
+        
+        // Select para las determinaciones (opciones ocultas)
+        select#id_Determinacion(name="id_Determinacion" class="form-control" required style="display: none;")
           each determinacion in determinaciones
             option(value=determinacion.id_Determinacion) #{determinacion.Nombre_Determinacion}
       
@@ -37,3 +47,47 @@ block content
         input#Valor_Referencia_Maximo(type="number" step="0.01" name="Valor_Referencia_Maximo" class="form-control" required)
       
       button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear el valor de referencia?')") Crear Valores de Referencia
+    
+    script.
+      $(document).ready(function() {
+        $('#buscar_determinacion').on('input', function() {
+          let query = $(this).val().toLowerCase();
+          $('#lista_resultados').empty(); // Limpiar resultados previos
+          
+          if (query.length > 0) {
+            let results = $('#id_Determinacion option').filter(function() {
+              return $(this).text().toLowerCase().includes(query);
+            });
+            
+            results.each(function() {
+              const optionText = $(this).text();
+              const optionId = $(this).val();
+              $('#lista_resultados').append('<li class="resultado" data-id="' + optionId + '">' + optionText + '</li>');
+            });
+
+            if ($('#lista_resultados').children().length > 0) {
+              $('#resultados_busqueda').show();
+            } else {
+              $('#resultados_busqueda').hide();
+            }
+          } else {
+            $('#resultados_busqueda').hide();
+          }
+        });
+
+        // Evento para seleccionar una determinación
+        $(document).on('click', '.resultado', function() {
+          const id = $(this).data('id');
+          const nombre = $(this).text();
+          $('#id_Determinacion').val(id); // Establecer el valor del select
+          $('#buscar_determinacion').val(nombre); // Actualizar el input de búsqueda
+          $('#resultados_busqueda').hide(); // Ocultar resultados
+        });
+        
+        // Ocultar resultados si el usuario hace clic fuera de ellos
+        $(document).on('click', function(event) {
+          if (!$(event.target).closest('#resultados_busqueda').length && !$(event.target).is('#buscar_determinacion')) {
+            $('#resultados_busqueda').hide();
+          }
+        });
+      });

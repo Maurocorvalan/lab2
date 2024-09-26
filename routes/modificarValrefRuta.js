@@ -228,5 +228,34 @@ router.post("/agregar-nuevo-valor-referencia", async (req, res) => {
       .send("Error al procesar la creación de un nuevo valor de referencia.");
   }
 });
+// Ruta para buscar determinaciones en tiempo real
+router.post("/buscar-determinacion", async (req, res) => {
+  try {
+    const { query } = req.body;
 
+    // Busca las determinaciones que coincidan con la consulta
+    const determinacionesEncontradas = await Determinacion.findAll({
+      where: {
+        Nombre_Determinacion: {
+          [Op.like]: `%${query}%` // Usa like para buscar coincidencias
+        }
+      }
+    });
+
+    // Renderiza las opciones encontradas
+    let resultadosHtml = '';
+    if (determinacionesEncontradas.length > 0) {
+      determinacionesEncontradas.forEach(det => {
+        resultadosHtml += `<div class="resultado" data-id="${det.id_Determinacion}">${det.Nombre_Determinacion}</div>`;
+      });
+    } else {
+      resultadosHtml = '<div>No se encontraron resultados.</div>';
+    }
+
+    res.send(resultadosHtml);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error al buscar las determinaciones.");
+  }
+});
 module.exports = router;

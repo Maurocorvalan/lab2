@@ -9,7 +9,7 @@ block content
 
     form(action="/buscar-valores/buscar-valores-referencia" method="post" class="mb-4")
       div.form-group
-        label(for="id_Determinacion") ID de la Determinación:
+        label(for="id_Determinacion") Determinación:
         select(name="id_Determinacion", required, class="form-control")
           if determinaciones && determinaciones.length > 0
             each determinacion in determinaciones
