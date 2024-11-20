@@ -417,7 +417,6 @@ app.post("/admin/actualizar-usuario", async (req, res) => {
 
       await usuarioExistente.save();
 
-      console.log("Usuario actualizado exitosamente");
       res.render("actualizarUsuarioAdm", {
         mensaje: `Usuario ${nombre} actualizado exitosamente`,
       });
@@ -509,7 +508,6 @@ app.get("/logout", (req, res) => {
       console.error("Error al cerrar sesión:", err);
       return res.status(500).send("Error al cerrar sesión");
     }
-    console.log("Sesión cerrada");
     res.redirect("/"); // Redirige al usuario a la página de inicio o a otra página deseada
   });
 });
@@ -532,7 +530,6 @@ app.post("/cambiar-contrasena", (req, res) => {
 
   // Verificar si la contraseña actual ingresada coincide con la del usuario
   if (!bcrypt.compareSync(contrasenaActual, usuario.password)) {
-    console.log("Las contraseñas actuales no coinciden");
     return res.render("cambiarContrasena", {
       mensajeContrasenaIncorrecta: true,
       mensajeContrasenasNoCoinciden: false,
@@ -542,7 +539,6 @@ app.post("/cambiar-contrasena", (req, res) => {
   // Verificar si las contraseñas nuevas coinciden
   if (nuevaContrasena !== confirmarContrasena) {
     // Las contraseñas nuevas no coinciden, muestra un mensaje de error
-    console.log("Las contraseñas no coinciden");
 
     return res.render("cambiarContrasena", {
       mensajeContrasenaIncorrecta: false,
@@ -567,9 +563,7 @@ sequelize
   .sync()
   .then(() => {
     app.listen(3000, () => {
-      console.log("Servidor en ejecución en el puerto 3000");
     });
   })
   .catch((error) => {
-    console.error("Error al sincronizar modelos con la base de datos:", error);
   });

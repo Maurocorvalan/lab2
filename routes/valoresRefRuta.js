@@ -10,7 +10,7 @@ router.get("/crear-valores", async (req, res) => {
     const determinaciones = await Determinacion.findAll();
     res.render("crearValores", { determinaciones });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener la lista de determinaciones.");
   }
 });
@@ -54,10 +54,10 @@ router.post("/crear-valores", async (req, res) => {
       `Valores de referencia creados para determinación ID: ${id_Determinacion}`
     );
 
-    console.log("Valores de referencia creados con éxito.");
+    log("Valores de referencia creados con éxito.");
     res.redirect("/tecnico"); // Redirige a la página de inicio o la que prefieras
   } catch (error) {
-    console.error("Error al crear los valores de referencia:", error);
+    error("Error al crear los valores de referencia:", error);
     res.status(500).send("Error al crear los valores de referencia.");
   }
 });

@@ -97,7 +97,7 @@ block content
         window.open(url, '_blank');
 
       } catch (error) {
-        console.error('Error al generar PDF:', error);
+        error('Error al generar PDF:', error);
         alert('Error al generar PDF.');
       }
     }

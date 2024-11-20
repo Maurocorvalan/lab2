@@ -11,7 +11,7 @@ router.get("/buscar-valores-referencia", async (req, res) => {
     const determinaciones = await Determinacion.findAll();
     res.render("buscarModificarValref", { determinaciones });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener la lista de determinaciones.");
   }
 });
@@ -57,7 +57,7 @@ router.post("/buscar-valores-referencia", async (req, res) => {
       determinacionSeleccionada: id_Determinacion,
     });
   } catch (error) {
-    console.error(
+    error(
       "Error al procesar la búsqueda de valores de referencia:",
       error
     );
@@ -83,7 +83,7 @@ router.get("/crear-modificar-valores-referencia/:valorId", async (req, res) => {
       valorReferenciaExistente,
     });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener el valor de referencia.");
   }
 });
@@ -138,7 +138,7 @@ router.post(
           `Modificación del valor de referencia con ID: ${valorId}`
         );
 
-        console.log("Valores de referencia modificados con éxito.");
+        log("Valores de referencia modificados con éxito.");
       } else {
         // Si no existe, crea un nuevo valor de referencia
         await ValoresReferencia.create({
@@ -158,12 +158,12 @@ router.post(
           `Creación de un nuevo valor de referencia para la determinación con ID: ${id_Determinacion}`
         );
 
-        console.log("Nuevo valor de referencia creado con éxito.");
+        log("Nuevo valor de referencia creado con éxito.");
       }
 
       res.redirect("/buscar-valores/buscar-valores-referencia");
     } catch (error) {
-      console.error(
+      error(
         "Error al procesar la creación/modificación de valores de referencia:",
         error
       );
@@ -215,11 +215,11 @@ router.post("/agregar-nuevo-valor-referencia", async (req, res) => {
       `Creación de un nuevo valor de referencia para la determinación con ID: ${id_Determinacion}`
     );
 
-    console.log("Nuevo valor de referencia creado con éxito.");
+    log("Nuevo valor de referencia creado con éxito.");
 
     res.redirect("/buscar-valores/buscar-valores-referencia");
   } catch (error) {
-    console.error(
+    error(
       "Error al procesar la creación de un nuevo valor de referencia:",
       error
     );
@@ -254,7 +254,7 @@ router.post("/buscar-determinacion", async (req, res) => {
 
     res.send(resultadosHtml);
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al buscar las determinaciones.");
   }
 });

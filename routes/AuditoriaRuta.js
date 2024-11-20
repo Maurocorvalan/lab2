@@ -13,7 +13,7 @@ const auditoriaController = {
         Detalles_Adicionales: detalles,
       });
     } catch (error) {
-      console.error("Error al registrar auditoría:", error);
+      error("Error al registrar auditoría:", error);
       throw error; // Lanza el error para que pueda ser manejado por el controlador de rutas
     }
   },
@@ -70,7 +70,7 @@ const auditoriaController = {
 
       return { auditorias, totalPages };
     } catch (error) {
-      console.error("Error al obtener auditorías:", error);
+      error("Error al obtener auditorías:", error);
       throw error;
     }
   },
@@ -94,7 +94,7 @@ const auditoriaController = {
 
       return auditorias;
     } catch (error) {
-      console.error("Error al buscar auditorías por descripción:", error);
+      error("Error al buscar auditorías por descripción:", error);
       throw error;
     }
   },

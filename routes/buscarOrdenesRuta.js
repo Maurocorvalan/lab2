@@ -18,7 +18,7 @@ router.get("/ordenes", (req, res) => {
 router.post("/ordenes", async (req, res) => {
   try {
     const dniPaciente = req.body.dniPaciente;
-    console.log("ID del Paciente:", dniPaciente);
+    log("ID del Paciente:", dniPaciente);
 
     // Buscar órdenes de trabajo por id_paciente
     const ordenesTrabajo = await OrdenTrabajo.findAll({
@@ -43,7 +43,7 @@ router.post("/ordenes", async (req, res) => {
       res.json(ordenesTrabajo); // Enviar las órdenes de trabajo en formato JSON
     }
   } catch (error) {
-    console.error("Error al buscar órdenes de trabajo:", error);
+    error("Error al buscar órdenes de trabajo:", error);
     res.status(500).json({ error: "Error al buscar órdenes de trabajo" });
   }
 });
@@ -78,7 +78,7 @@ router.get("/detalles/:id_Orden", async (req, res) => {
 
     res.json(datosAdicionales);
   } catch (error) {
-    console.error(
+    error(
       "Error al obtener los detalles de la orden de trabajo:",
       error
     );
@@ -131,7 +131,7 @@ router.get("/crear-modificar-orden/:idOrden", async (req, res) => {
       estadoOrden,
     });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener la orden de trabajo.");
   }
 });
@@ -175,13 +175,13 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
               Tipo_Muestra: tipoMuestra,
               estado: estadoValue,
             });
-            console.log("Muestra creada:", nuevaMuestra);
+            log("Muestra creada:", nuevaMuestra);
           }
         } catch (error) {
-          console.error("Error al crear la muestra:", error);
+          error("Error al crear la muestra:", error);
         }
       } else {
-        console.log("No se seleccionaron tipos de muestra.");
+        log("No se seleccionaron tipos de muestra.");
       }
 
       // Verificar si se han seleccionado exámenes y crearlos si es necesario
@@ -219,7 +219,7 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
       res.status(404).send("Orden de trabajo no encontrada.");
     }
   } catch (error) {
-    console.error(
+    error(
       "Error al procesar la orden de trabajo y las muestras:",
       error
     );
@@ -243,7 +243,7 @@ router.get("/cancelar-orden/:idOrden", async (req, res) => {
     // Renderiza la vista para ingresar la descripción de la cancelación
     res.render("cancelarOrden", { ordenTrabajoExistente });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al cancelar la orden de trabajo.");
   }
 });
@@ -273,7 +273,7 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
       ordenTrabajoExistente.descripcionCancelacion = descripcionCancelacion;
       await ordenTrabajoExistente.save();
 
-      console.log("Orden de trabajo cancelada con éxito.");
+      log("Orden de trabajo cancelada con éxito.");
 
       // Registro de auditoría
       await auditoriaController.registrar(
@@ -289,7 +289,7 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
     // Redirecciona a la página principal de órdenes después de cancelar
     res.redirect("/buscarOrdenes/ordenes");
   } catch (error) {
-    console.error(
+    error(
       "Error al procesar la cancelación de la orden de trabajo:",
       error
     );
@@ -403,11 +403,11 @@ GROUP BY
     `,
       { type: sequelize.QueryTypes.SELECT }
     );
-    console.log("Órdenes informadas:", ordenesInformadas);
+    log("Órdenes informadas:", ordenesInformadas);
     // Renderiza la vista pug con las órdenes informadas
     res.render("ordenesInformadas", { ordenes: ordenesInformadas });
   } catch (error) {
-    console.error("Error al obtener órdenes informadas:", error);
+    error("Error al obtener órdenes informadas:", error);
     res.status(500).json({ error: "Error al obtener órdenes informadas" });
   }
 });

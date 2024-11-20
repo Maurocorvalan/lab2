@@ -102,7 +102,7 @@ block content
               document.getElementById('mensaje').innerHTML = 'No se encontraron resultados.';
             }
           } catch (error) {
-            console.error("Error al filtrar auditorías", error);
+            error("Error al filtrar auditorías", error);
             document.getElementById('mensaje').innerHTML = 'Ocurrió un error al buscar las auditorías.';
           }
         });

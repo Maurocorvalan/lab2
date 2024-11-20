@@ -10,7 +10,7 @@ router.get("/crear-determinacion", async (req, res) => {
     const examenes = await Examen.findAll();
     res.render("crearDeterminacion", { examenes });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener la lista de exámenes.");
   }
 });
@@ -40,7 +40,7 @@ router.post("/crear-determinacion", async (req, res) => {
       estado: true,
     });
 
-    console.log("Determinación creada con éxito.");
+    log("Determinación creada con éxito.");
 
     // Registro de auditoría
     await auditoriaController.registrar(
@@ -52,7 +52,7 @@ router.post("/crear-determinacion", async (req, res) => {
     // Redireccionar a la página de valores de referencia
     res.redirect("/valoresreferencia/crear-valores");
   } catch (error) {
-    console.error("Error al crear la determinación:", error);
+    error("Error al crear la determinación:", error);
     res.status(500).send("Error al crear la determinación.");
   }
 });

@@ -31,7 +31,7 @@ router.get("/mostrar/:id_orden", async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error al buscar muestras:", error);
+    error("Error al buscar muestras:", error);
     res.status(500).json({ error: "Error al buscar muestras" });
   }
 });
@@ -87,7 +87,7 @@ router.get("/:id_orden/generarPDFMuestra/:idMuestra", async (req, res) => {
     // Enviar el contenido del PDF como respuesta JSON al cliente
     res.json({ pdfBase64 });
   } catch (error) {
-    console.error("Error al obtener muestra para PDF:", error);
+    error("Error al obtener muestra para PDF:", error);
     res.status(500).json({ error: "Error al obtener muestra para PDF" });
   }
 });
@@ -119,7 +119,7 @@ router.get("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
 
     res.render("aniadirResultados", { muestra, determinaciones });
   } catch (error) {
-    console.error("Error al buscar determinaciones:", error);
+    error("Error al buscar determinaciones:", error);
     res.status(500).json({ error: "Error al buscar determinaciones" });
   }
 });
@@ -140,7 +140,7 @@ router.get(
 
       res.json(valoresReferencia);
     } catch (error) {
-      console.error("Error al obtener valores de referencia:", error);
+      error("Error al obtener valores de referencia:", error);
       res.status(500).json({ error: "Error al obtener valores de referencia" });
     }
   }
@@ -178,7 +178,7 @@ router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
     }
 
     const id_Orden = muestra.id_Orden; // Captura id_Orden
-    console.log("ID de la orden: " + id_Orden);
+    log("ID de la orden: " + id_Orden);
 
     // Crear un nuevo resultado
     await Resultado.create({
@@ -198,7 +198,7 @@ router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
 
     res.redirect(`/muestras/mostrar/${id_Orden}`); // Redirige a la vista de muestras
   } catch (error) {
-    console.error("Error al añadir resultado:", error);
+    error("Error al añadir resultado:", error);
     res.status(500).json({ error: "Error al añadir resultado" });
   }
 });
@@ -240,7 +240,7 @@ router.post("/actualizarEstado/:id_muestra", async (req, res) => {
     req.flash("success_msg", "Estado actualizado con éxito.");
     res.redirect(`/muestras/mostrar/${muestra.id_Orden}`);
   } catch (error) {
-    console.error("Error al actualizar estado:", error);
+    error("Error al actualizar estado:", error);
     req.flash("error_msg", "Error al actualizar estado.");
     res.redirect(`/muestras/mostrar/${id_muestra}`);
   }
@@ -279,7 +279,7 @@ router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
     req.flash("success_msg", 'Orden actualizada a "Para validar"');
     res.redirect(`/muestras/detalleOrden/${id_orden}`); // Redirige a la nueva ruta que muestra los detalles de la orden
   } catch (error) {
-    console.error("Error al actualizar el estado de la orden:", error);
+    error("Error al actualizar el estado de la orden:", error);
     req.flash("error_msg", "Error al actualizar el estado de la orden.");
     res.redirect(`/muestras/mostrar/${id_orden}`); // Redirige a la vista de las muestras de la orden en caso de error
   }
@@ -463,14 +463,14 @@ WHERE
       error_msg: req.flash("error_msg"),
     });
   } catch (error) {
-    console.error("Error al obtener detalles de la orden:", error);
+    error("Error al obtener detalles de la orden:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 // Ruta para actualizar el estado de una orden a "Informada"
 router.post("/actualizarEstadoOrden/:id_orden/informada", async (req, res) => {
   const id_orden = req.params.id_orden;
-  console.log("ID de Orden Capturado:", id_orden);
+  log("ID de Orden Capturado:", id_orden);
 
   // Verificar que el usuario está autenticado
   if (!req.user || !req.user.dataValues) {
@@ -498,10 +498,10 @@ router.post("/actualizarEstadoOrden/:id_orden/informada", async (req, res) => {
     );
 
     req.flash("success_msg", 'Orden actualizada a "Informada"');
-    console.log("Orden actualizada a 'Informada'");
+    log("Orden actualizada a 'Informada'");
     res.redirect(`/muestras/detalleOrden/${id_orden}`); // Redirigir a la vista de detalles de la orden
   } catch (error) {
-    console.error("Error al actualizar el estado de la orden:", error);
+    error("Error al actualizar el estado de la orden:", error);
     req.flash("error_msg", "Error al actualizar el estado de la orden.");
     res.redirect(`/muestras/detalleOrden/${id_orden}`); // Redirigir en caso de error
   }

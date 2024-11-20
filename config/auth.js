@@ -29,7 +29,7 @@ passport.use(new LocalStrategy(
 
             return done(null, user);
         } catch (error) {
-            console.error('Error de autenticación:', error);
+            error('Error de autenticación:', error);
             return done(error);
         }
     }

@@ -6,6 +6,7 @@ const Examen = require("../models/examen");
 const Paciente = require("../models/paciente");
 const OrdenesExamenes = require("../models/ordenes_examen");
 const auditoriaController = require("../routes/AuditoriaRuta");
+const TiposMuestra = require("../models/tipos_muestra");
 
 // Función para sumar días a una fecha
 function sumarDias(fecha, dias) {
@@ -18,25 +19,27 @@ router.get("/ordenes", (req, res) => {
 });
 router.get("/generacion-orden", async (req, res) => {
   try {
-    const tiposMuestra = [
-      { value: "sangre", label: "Sangre" },
-      { value: "orina", label: "Orina" },
-      { value: "heces", label: "Heces" },
-      { value: "liquidoCefaloraquideo", label: "Líquido Cefalorraquídeo" },
-      { value: "saliva", label: "Saliva" },
-      { value: "nasofaringea", label: "Secreción Nasofaríngea" },
-    ];
+    // Obtener exámenes con sus tipos de muestra relacionados
+    const examenes = await Examen.findAll({
+      include: {
+        model: TiposMuestra,
+        as: "tipoMuestra", // Alias configurado en las asociaciones
+        attributes: ["idTipoMuestra", "tipoDeMuestra"], // Sólo traer los campos necesarios
+      },
+    });
 
-    // Obtén la lista de exámenes y pacientes desde la base de datos
-    const examenes = await Examen.findAll();
-    const pacientes = await Paciente.findAll();
-    res.render("generarOrden", { tiposMuestra, examenes, pacientes });
+    // Obtener todos los pacientes
+    const pacientes = await Paciente.findAll({
+      attributes: ["id_paciente", "nombre", "apellido", "dni"], // Traer los campos requeridos
+    });
+
+    // Renderizar la vista con los datos obtenidos
+    res.render("generarOrden", { examenes, pacientes });
   } catch (error) {
-    console.error(error);
+    console.error("Error al obtener la lista de exámenes:", error);
     res.status(500).send("Error al obtener la lista de exámenes.");
   }
 });
-
 // Ruta para procesar la generación de orden
 router.post("/generacion-orden", async (req, res) => {
   try {

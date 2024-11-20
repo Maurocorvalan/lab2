@@ -62,7 +62,7 @@ block content
             }
           })
           .catch(error => {
-            console.error("Error en la búsqueda: ", error);
+            error("Error en la búsqueda: ", error);
           });
       }
 
@@ -94,7 +94,7 @@ block content
               }
             })
             .catch(error => {
-              console.error("Error al eliminar el usuario: ", error);
+              error("Error al eliminar el usuario: ", error);
             });
         }
       }

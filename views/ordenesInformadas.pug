@@ -53,7 +53,7 @@ block content
     document.getElementById('printButton').addEventListener('click', function() {
       const element = document.querySelector('.report-container');
       if (!element) {
-        console.error('El elemento .report-container no se encontró');
+        error('El elemento .report-container no se encontró');
         return;
       }
 
@@ -69,6 +69,6 @@ block content
         pdf.autoPrint();
         window.open(pdf.output('bloburl'), '_blank');
       }).catch(function(error) {
-        console.error('Error generando el PDF:', error);
+        error('Error generando el PDF:', error);
       });
     });

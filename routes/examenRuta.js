@@ -9,7 +9,7 @@ router.get("/crear-examen", async (req, res) => {
   try {
     res.render("crearExamen");
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener.");
   }
 });
@@ -34,7 +34,7 @@ router.post("/crear-examen", async (req, res) => {
       estado: true, // Establece el estado como true automáticamente
     });
 
-    console.log("Examen creado con éxito:", examen);
+    log("Examen creado con éxito:", examen);
 
     // Registro de auditoría
     await auditoriaController.registrar(
@@ -46,7 +46,7 @@ router.post("/crear-examen", async (req, res) => {
     // Redireccionar a la página de creación de determinación
     res.redirect("/determinacion/crear-determinacion");
   } catch (error) {
-    console.error("Error al crear el examen:", error);
+    error("Error al crear el examen:", error);
     res.status(500).send("Error al crear el examen.");
   }
 });

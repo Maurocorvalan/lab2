@@ -68,7 +68,7 @@ block content
             resultHeading.textContent = `No se encontraron órdenes de trabajo para el paciente con DNI ${dniPaciente}.`;
           }
         } catch (error) {
-          console.error('Error al buscar órdenes de trabajo:', error);
+          error('Error al buscar órdenes de trabajo:', error);
           resultHeading.textContent = "Error al buscar órdenes de trabajo.";
         }
       });

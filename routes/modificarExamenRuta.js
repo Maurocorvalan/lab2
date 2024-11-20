@@ -11,7 +11,7 @@ router.get("/buscar-modificar-examen", async (req, res) => {
 
     res.render("buscarModificarExamen", { examenes });
   } catch (error) {
-    console.error(error);
+    error(error);
     res.status(500).send("Error al obtener los exámenes.");
   }
 });
@@ -51,7 +51,7 @@ router.post("/buscar-modificar-examen", async (req, res) => {
 
     res.render("buscarModificarExamen", { examen });
   } catch (error) {
-    console.error("Error al buscar y modificar el examen:", error);
+    error("Error al buscar y modificar el examen:", error);
     res.status(500).send("Error al buscar y modificar el examen.");
   }
 });
@@ -86,7 +86,7 @@ router.post("/modificar", async (req, res) => {
     // Actualiza el examen en la base de datos
     await examen.save();
 
-    console.log("Examen modificado con éxito.");
+    log("Examen modificado con éxito.");
 
     // Registro de auditoría
     await auditoriaController.registrar(
@@ -97,7 +97,7 @@ router.post("/modificar", async (req, res) => {
 
     res.redirect("/modificar-examen/buscar-modificar-examen");
   } catch (error) {
-    console.error("Error al modificar el examen:", error);
+    error("Error al modificar el examen:", error);
     res.status(500).send("Error al modificar el examen.");
   }
 });

@@ -12,7 +12,7 @@ router.get("/modificar-determinacion", async (req, res) => {
     const determinaciones = await Determinacion.findAll();
     res.render("buscarModificarDeterminacion", { examenes, determinaciones });
   } catch (error) {
-    console.error(error);
+    error(error);
     res
       .status(500)
       .send("Error al obtener la lista de exámenes y determinaciones.");
@@ -74,7 +74,7 @@ router.post("/buscar-determinacion", async (req, res) => {
           : null,
     });
   } catch (error) {
-    console.error("Error al procesar la búsqueda de determinaciones:", error);
+    error("Error al procesar la búsqueda de determinaciones:", error);
     res.status(500).send("Error al procesar la búsqueda de determinaciones.");
   }
 });
@@ -93,8 +93,8 @@ router.post("/modificar-estado", async (req, res) => {
 
     const usuarioId = req.user.dataValues.id_Usuario;
 
-    console.log("ID de determinación recibido:", id_Determinacion);
-    console.log("Nuevo estado recibido:", estado);
+    log("ID de determinación recibido:", id_Determinacion);
+    log("Nuevo estado recibido:", estado);
     const determinacion = await Determinacion.findByPk(id_Determinacion);
 
     if (!determinacion) {
@@ -104,7 +104,7 @@ router.post("/modificar-estado", async (req, res) => {
     determinacion.estado = parseInt(estado, 10);
     await determinacion.save();
 
-    console.log("Estado de determinación modificado con éxito.");
+    log("Estado de determinación modificado con éxito.");
 
     // Registro de auditoría
     await auditoriaController.registrar(
@@ -115,7 +115,7 @@ router.post("/modificar-estado", async (req, res) => {
 
     res.redirect("/modificar-determinacion/modificar-determinacion");
   } catch (error) {
-    console.error("Error al modificar el estado de la determinación:", error);
+    error("Error al modificar el estado de la determinación:", error);
     res.status(500).send("Error al modificar el estado de la determinación.");
   }
 });
