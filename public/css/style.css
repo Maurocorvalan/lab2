@@ -63,7 +63,7 @@ body {
   color: #343a40;
 }
 .card {
-  height: 600px; /* Ajusta este valor según tus necesidades */
+  height: auto; /* Ajusta este valor según tus necesidades */
   overflow-y: auto; /* Permite el scroll vertical */
 }
 

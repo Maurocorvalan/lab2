@@ -43,12 +43,30 @@ block content
               each muestra in orden.Muestras
                 .form-check
                   input.form-check-input(type="checkbox" name="tipos_muestra" value=muestra.idTipoMuestra checked)
-                  label.form-check-label(for=muestra.idTipoMuestra)= muestra.Tipo_Muestra
+                  label.form-check-label(for=muestra.idTipoMuestra)= muestra.TipoMuestra.tipoDeMuestra
             else
               p No se encontraron muestras asociadas.
 
         // Botones
-        button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Guardar Orden de Trabajo
+        .form-group
+          button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Guardar Orden de Trabajo
+          button.btn.btn-danger(type="button" data-bs-toggle="modal" data-bs-target="#cancelModal") Cancelar Orden
+
+      // Modal para cancelar orden
+      .modal.fade#cancelModal(tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true")
+        .modal-dialog
+          .modal-content
+            .modal-header
+              h5.modal-title#cancelModalLabel Cancelar Orden
+              button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+            .modal-body
+              form#cancel-order-form(action=`/buscarOrdenes/cancelar-orden/${orden.id_Orden}` method="POST")
+                .form-group
+                  label(for="descripcionCancelacion") Descripción de la Cancelación:
+                  textarea#descripcionCancelacion.form-control(name="descripcionCancelacion" required placeholder="Motivo de la cancelación..."  )
+                .modal-footer
+                  button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cerrar
+                  button.btn.btn-danger(type="submit") Confirmar Cancelación
 
     script.
       const examenes = !{JSON.stringify(examenes)};
@@ -86,6 +104,7 @@ block content
               selectedExams.appendChild(option);
             }
             updateExamenesSelectedIds();
+            updateTiposMuestra(); // Actualiza los tipos de muestra según los exámenes seleccionados
             examResults.innerHTML = ""; // Limpiar después de seleccionar
           });
 
@@ -98,6 +117,7 @@ block content
         if (event.target.tagName === "OPTION") {
           event.target.remove();
           updateExamenesSelectedIds();
+          updateTiposMuestra(); // Actualiza los tipos de muestra después de eliminar un examen
         }
       });
 
@@ -105,4 +125,31 @@ block content
       function updateExamenesSelectedIds() {
         const selectedIds = Array.from(selectedExams.options).map(option => option.value);
         examenesSelectedIdsInput.value = selectedIds.join(",");
+      }
+
+      // Actualizar tipos de muestra según los exámenes seleccionados
+      function updateTiposMuestra() {
+        const selectedExamIds = Array.from(selectedExams.options).map(option => parseInt(option.value));
+
+        const tiposMuestraRequeridos = new Set();
+        selectedExamIds.forEach(id => {
+          const examen = examenes.find(examen => examen.id_examen === id);
+          if (examen && examen.tipoMuestra) {
+            tiposMuestraRequeridos.add(examen.tipoMuestra.tipoDeMuestra);
+          }
+        });
+
+        tiposMuestraContainer.innerHTML = "";
+        tiposMuestraRequeridos.forEach(tipo => {
+          // Verifica si el tipo ya está presente en el contenedor
+          if (!document.querySelector(`input[name="tipos_muestra"][value="${tipo}"]`)) {
+            const div = document.createElement("div");
+            div.className = "form-check";
+            div.innerHTML = `
+              <input class="form-check-input" type="checkbox" name="tipos_muestra" value="${tipo}" id="${tipo}" checked>
+              <label class="form-check-label" for="${tipo}">${tipo}</label>
+            `;
+            tiposMuestraContainer.appendChild(div);
+          }
+        });
       }

@@ -7,6 +7,8 @@ const Examen = require("../models/examen");
 const OrdenesExamen = require("../models/ordenes_examen");
 const auditoriaController = require("../routes/AuditoriaRuta");
 const TiposMuestra = require("../models/tipos_muestra");
+const OrdenesExamenes = require("../models/ordenes_examen");
+
 const { Op } = require("sequelize");
 const sequelize = require("../config/database");
 
@@ -78,6 +80,11 @@ router.get("/crear-modificar-orden/:idOrden", async (req, res) => {
         {
           model: Muestra,
           attributes: ["idTipoMuestra", "Fecha_Recepcion", "estado"],
+          include: {
+            model: TiposMuestra,
+            as: "TipoMuestra", // Especifica el alias aquí
+            attributes: ["tipoDeMuestra"], // Trae el campo que necesitas
+          },
         },
         {
           model: OrdenesExamen,
@@ -113,52 +120,138 @@ router.get("/crear-modificar-orden/:idOrden", async (req, res) => {
     res.status(500).send("Error al obtener la orden.");
   }
 });
-
-// Ruta para procesar la creación/modificación de órdenes
 router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
   try {
-    const { idOrden } = req.params;
-    const { estado, examenesSelectedIds, tipos_muestra } = req.body;
+    const {
+      estado,
+      examenesSelectedIds,
+      id_paciente,
+      dni_paciente,
+      tipos_muestra, // Este campo debe ser un array
+    } = req.body;
 
-    const orden = await OrdenTrabajo.findByPk(idOrden);
+    // Verifica la autenticación del usuario
+    const user = req.user;
+    if (!user || !user.dataValues) {
+      return res.status(401).send("Usuario no autenticado.");
+    }
+    const usuarioId = user.dataValues.id_Usuario;
+
+    // Validaciones
+    if (!id_paciente || !dni_paciente) {
+      return res.status(400).send("Paciente no seleccionado.");
+    }
+
+    if (!examenesSelectedIds || examenesSelectedIds.trim() === "") {
+      return res.status(400).send("Debe seleccionar al menos un examen.");
+    }
+
+    const examenesSelectedIdsArray = examenesSelectedIds.split(",").map(Number).filter(Boolean);
+
+    // Buscar la orden existente
+    const orden = await OrdenTrabajo.findByPk(req.params.idOrden);
     if (!orden) {
       return res.status(404).send("Orden no encontrada.");
     }
 
+    // Actualizar los datos básicos de la orden
     orden.estado = estado;
+    orden.dni = dni_paciente;
+    orden.Fecha_Entrega = sumarDias(new Date(), await Examen.max("tiempoDemora", {
+      where: { id_examen: examenesSelectedIdsArray },
+    }));
     await orden.save();
 
+    // Actualizar o crear exámenes asociados
+    for (const examenId of examenesSelectedIdsArray) {
+      const examen = await Examen.findByPk(examenId, {
+        include: { model: TiposMuestra, as: "tipoMuestra" },
+      });
+
+      if (!examen) continue;
+
+      const [ordenExamen] = await OrdenesExamenes.findOrCreate({
+        where: { id_Orden: orden.id_Orden, id_examen: examenId },
+      });
+
+      // Actualizar información del examen si aplica
+      await ordenExamen.save();
+
+      // Asociar los tipos de muestra requeridos por el examen
+      if (examen.tipoMuestra) {
+        const tipoMuestra = await TiposMuestra.findOrCreate({
+          where: { tipoDeMuestra: examen.tipoMuestra.tipoDeMuestra },
+        });
+
+        const idTipoMuestra = tipoMuestra[0].idTipoMuestra;
+
+        const [muestra] = await Muestra.findOrCreate({
+          where: { id_Orden: orden.id_Orden, idTipoMuestra },
+          defaults: {
+            id_Paciente: id_paciente,
+            Fecha_Recepcion: new Date(),
+            estado: "pendiente",
+          },
+        });
+
+        // Actualizar información de la muestra si aplica
+        await muestra.save();
+      }
+    }
+
+    // Manejar tipos de muestra seleccionados manualmente
     if (tipos_muestra) {
-      await Muestra.destroy({ where: { id_Orden: idOrden } });
+      const tiposMuestraArray = Array.isArray(tipos_muestra) ? tipos_muestra : [tipos_muestra];
 
-      for (const tipoMuestra of tipos_muestra) {
-        const tipoMuestraId = await obtenerIdTipoMuestra(tipoMuestra);
-        await Muestra.create({
-          id_Orden: idOrden,
-          idTipoMuestra: tipoMuestraId,
-          Fecha_Recepcion: new Date(),
-          estado: "pendiente",
+      for (const tipoMuestra of tiposMuestraArray) {
+        const idTipoMuestra = await obtenerIdTipoMuestra(tipoMuestra.trim());
+        if (!idTipoMuestra) continue;
+
+        const [muestra] = await Muestra.findOrCreate({
+          where: { id_Orden: orden.id_Orden, idTipoMuestra },
+          defaults: {
+            id_Paciente: id_paciente,
+            Fecha_Recepcion: new Date(),
+            estado: "pendiente",
+          },
         });
+
+        // Actualizar información de la muestra si aplica
+        await muestra.save();
       }
     }
 
-    if (examenesSelectedIds) {
-      await OrdenesExamen.destroy({ where: { id_Orden: idOrden } });
+    // Registrar auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Modificación de Orden de Trabajo",
+      `Actualización de la orden con ID: ${orden.id_Orden}`
+    );
 
-      for (const id_examen of examenesSelectedIds.split(",")) {
-        await OrdenesExamen.create({
-          id_Orden: idOrden,
-          id_examen: parseInt(id_examen),
-        });
-      }
+    // Redirigir según el rol del usuario
+    const rolesRedirect = {
+      tecnico: "/tecnico",
+      recepcionista: "/recepcionista",
+      bioquimico: "/bioquimico",
+      admin: "/admin",
+    };
+
+    const userRole = req.user.rol;
+    if (req.isAuthenticated() && rolesRedirect[userRole]) {
+      res.redirect(
+        `${rolesRedirect[userRole]}?success=Orden+actualizada+con+éxito`
+      );
+    } else {
+      res.status(403).send("Acceso no autorizado");
     }
-
-    res.send("Orden actualizada con éxito.");
   } catch (error) {
-    console.error("Error al modificar la orden:", error);
-    res.status(500).send("Error al modificar la orden.");
+    console.error("Error al procesar la actualización de la orden:", error);
+    res.status(500).send("Error al procesar la actualización de la orden.");
   }
 });
+
+
+
 
 // Ruta para cancelar una orden
 router.post("/cancelar-orden/:idOrden", async (req, res) => {
@@ -174,8 +267,22 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
     orden.estado = "cancelada";
     orden.descripcionCancelacion = descripcionCancelacion;
     await orden.save();
+    req.flash("success", "Orden cancelada con éxito.");
+    const rolesRedirect = {
+        
+      tecnico: "/tecnico",
+      recepcionista: "/recepcionista",
+      bioquimico: "/bioquimico",
+      admin: "/admin",
+    };
 
-    res.redirect("/ordenes");
+    const userRole = req.user.rol;
+    if (req.isAuthenticated() && rolesRedirect[userRole]) {
+      res.redirect(
+        `${rolesRedirect[userRole]}?success=Orden+cancelada+con+éxito`
+      );      } else {
+      res.status(403).send("Acceso no autorizado");
+    }
   } catch (error) {
     console.error("Error al cancelar la orden:", error);
     res.status(500).send("Error al cancelar la orden.");
@@ -205,5 +312,19 @@ router.get("/ordenes/informadas", async (req, res) => {
     res.status(500).send("Error al obtener órdenes informadas.");
   }
 });
-
+  // Función para sumar días a una fecha
+  function sumarDias(fecha, dias) {
+    const nuevaFecha = new Date(fecha);
+    nuevaFecha.setDate(nuevaFecha.getDate() + dias);
+    return nuevaFecha;
+  }
+  
+  // Función para obtener el ID de tipo de muestra por su nombre
+  async function obtenerIdTipoMuestra(nombreTipoMuestra) {
+    const tipoMuestra = await TiposMuestra.findOne({
+      where: { tipoDeMuestra: nombreTipoMuestra },
+    });
+    return tipoMuestra ? tipoMuestra.idTipoMuestra : null;
+  }
+  
 module.exports = router;
