@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const Examen = require("./examen"); // Importa el modelo de Examen
+const UnidadMedida = require("./unidadMedida"); // Importa el modelo de UnidadMedida
 
 const Determinacion = sequelize.define(
   "determinaciones",
@@ -10,17 +11,18 @@ const Determinacion = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    id_ValorReferencia:{
+    id_ValorReferencia: {
       type: DataTypes.INTEGER,
       allowNull: true,
-    },    Nombre_Determinacion: {
+    },
+    Nombre_Determinacion: {
       type: DataTypes.STRING,
     },
     Valor: {
       type: DataTypes.DECIMAL(10, 2),
     },
     Unidad_Medida: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
     },
     Sexo: {
       type: DataTypes.STRING,
@@ -42,6 +44,14 @@ const Determinacion = sequelize.define(
 Determinacion.belongsTo(Examen, {
   foreignKey: "id_examen",
   targetKey: "id_examen",
+  as: "examen", // Alias para la relación
+});
+
+// Establece la relación con UnidadMedida
+Determinacion.belongsTo(UnidadMedida, {
+  foreignKey: "Unidad_Medida",
+  targetKey: "id_UnidadMedida",
+  as: "unidadMedida", // Alias para la relación
 });
 
 module.exports = Determinacion;
