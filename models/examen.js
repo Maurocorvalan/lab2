@@ -34,6 +34,12 @@ const Examen = sequelize.define(
         key: "idTipoMuestra",
       },
     },
+    tiempoDemora: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1, 
+      
+    },
   },
   {
     timestamps: false,

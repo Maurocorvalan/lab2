@@ -11,26 +11,31 @@ block content
       form#generar-orden-form(action="/orden/generacion-orden" method="POST")
         .form-group
           label(for="paciente") Paciente:
-          input#pacienteSearch.form-control(type="text" placeholder="Buscar paciente...")
-          #pacienteResults
-          input#selectedPaciente(name="id_paciente" type="hidden")
-          input#selectedPacienteDNI(name="dni_paciente" type="hidden")
-          p Paciente seleccionado:
-          #selectedPacienteContainer(style="display:none")
-            p#selectedPacienteLabel
-            button#clearPacienteButton.btn.btn-secondary(type="button") Borrar
+          if pacienteSeleccionado
+            p Paciente preseleccionado:
+            p #{pacienteSeleccionado.nombre} #{pacienteSeleccionado.apellido} (DNI: #{pacienteSeleccionado.dni})
+            input(type="hidden" name="id_paciente" value="#{pacienteSeleccionado.id_paciente}")
+            input(type="hidden" name="dni_paciente" value="#{pacienteSeleccionado.dni}")
+          else
+            input#pacienteSearch.form-control(type="text" placeholder="Buscar paciente...")
+            ul#pacienteResults.list-group
+            input#selectedPaciente(name="id_paciente" type="hidden")
+            input#selectedPacienteDNI(name="dni_paciente" type="hidden")
+            p Paciente seleccionado:
+            #selectedPacienteContainer(style="display:none")
+              p#selectedPacienteLabel
+              button#clearPacienteButton.btn.btn-secondary(type="button") Borrar
 
         .form-group
           label(for="estado") Estado de la Orden:
           select#estado.form-control(name="estado")
-            option(value="ingresada") Ingresada
             option(value="esperando_toma_muestra") Esperando Toma de Muestra
             option(value="analitica") Analítica
 
         .form-group
           label(for="examenes") Exámenes:
           input#examSearch.form-control(type="text" placeholder="Buscar exámenes...")
-          #examResults
+          ul#examResults.list-group
           label(for="examenes") Exámenes seleccionados:
           select#examenesSelect.form-control(name="examenesSelect", multiple)
           input#examenesSelectedIds(name="examenesSelectedIds" type="hidden")
@@ -48,18 +53,117 @@ block content
       const pacientes = !{JSON.stringify(pacientes)};
 
       // Inicializar inputs y contenedores
+      const pacienteSearchInput = document.getElementById("pacienteSearch");
+      const pacienteResults = document.getElementById("pacienteResults");
+      const selectedPaciente = document.getElementById("selectedPaciente");
+      const selectedPacienteDNI = document.getElementById("selectedPacienteDNI");
+      const selectedPacienteContainer = document.getElementById("selectedPacienteContainer");
+      const selectedPacienteLabel = document.getElementById("selectedPacienteLabel");
+      const clearPacienteButton = document.getElementById("clearPacienteButton");
+
       const examSearchInput = document.getElementById("examSearch");
       const examResults = document.getElementById("examResults");
       const selectedExams = document.getElementById("examenesSelect");
+      const examenesSelectedIdsInput = document.getElementById("examenesSelectedIds");
       const tiposMuestraContainer = document.getElementById("tiposMuestraContainer");
 
-      // Funciones para manejar la lógica dinámica
+      // Buscar y seleccionar paciente
+      pacienteSearchInput?.addEventListener("input", () => {
+        const searchTerm = pacienteSearchInput.value.toLowerCase();
+
+        if (searchTerm === "") {
+          pacienteResults.innerHTML = ""; // Limpiar resultados si el campo está vacío
+          return;
+        }
+
+        const filteredPacientes = pacientes.filter(paciente =>
+          paciente.nombre.toLowerCase().includes(searchTerm) ||
+          paciente.apellido.toLowerCase().includes(searchTerm) ||
+          paciente.dni.toLowerCase().includes(searchTerm)
+        );
+
+        pacienteResults.innerHTML = ""; // Limpiar resultados anteriores
+        filteredPacientes.forEach(paciente => {
+          const li = document.createElement("li");
+          li.className = "list-group-item";
+          li.textContent = `${paciente.nombre} ${paciente.apellido} (DNI: ${paciente.dni})`;
+          li.dataset.idPaciente = paciente.id_paciente;
+          li.dataset.dniPaciente = paciente.dni;
+
+          li.addEventListener("click", () => {
+            selectedPaciente.value = li.dataset.idPaciente;
+            selectedPacienteDNI.value = li.dataset.dniPaciente;
+            selectedPacienteLabel.textContent = li.textContent;
+            pacienteSearchInput.value = "";
+            pacienteResults.innerHTML = "";
+            selectedPacienteContainer.style.display = "block";
+          });
+
+          pacienteResults.appendChild(li);
+        });
+      });
+
+      clearPacienteButton?.addEventListener("click", () => {
+        selectedPaciente.value = "";
+        selectedPacienteDNI.value = "";
+        selectedPacienteLabel.textContent = "";
+        selectedPacienteContainer.style.display = "none";
+      });
+
+      // Buscar y seleccionar exámenes
+      examSearchInput?.addEventListener("input", () => {
+        const searchTerm = examSearchInput.value.toLowerCase();
+        if (searchTerm === "") {
+          examResults.innerHTML = "";
+          return;
+        }
+
+        const filteredExams = examenes.filter(examen =>
+          examen.nombre_examen.toLowerCase().includes(searchTerm)
+        );
+
+        examResults.innerHTML = "";
+        filteredExams.forEach(examen => {
+          const li = document.createElement("li");
+          li.className = "list-group-item";
+          li.textContent = examen.nombre_examen;
+          li.dataset.idExamen = examen.id_examen;
+
+          li.addEventListener("click", () => {
+            const option = document.createElement("option");
+            option.value = li.dataset.idExamen;
+            option.textContent = li.textContent;
+            selectedExams.appendChild(option);
+
+            // Actualizar el campo oculto y los tipos de muestra
+            updateExamenesSelectedIds();
+            updateTiposMuestra();
+            examResults.innerHTML = "";
+          });
+
+          examResults.appendChild(li);
+        });
+      });
+
+      selectedExams?.addEventListener("dblclick", (event) => {
+        if (event.target.tagName === "OPTION") {
+          event.target.remove();
+          updateExamenesSelectedIds();
+          updateTiposMuestra();
+        }
+      });
+
+      function updateExamenesSelectedIds() {
+        const selectedIds = Array.from(selectedExams.options).map(option => option.value);
+        examenesSelectedIdsInput.value = selectedIds.join(",");
+      }
+
       function updateTiposMuestra() {
-        const selectedExamIds = Array.from(selectedExams.options).map(option => option.value);
+        const selectedExamIds = Array.from(selectedExams.options).map(option => parseInt(option.value));
 
         const tiposMuestraRequeridos = new Set();
         selectedExamIds.forEach(id => {
-          const examen = examenes.find(examen => examen.id_examen == id);
+          const examen = examenes.find(examen => examen.id_examen === id);
           if (examen && examen.tipoMuestra) {
             tiposMuestraRequeridos.add(examen.tipoMuestra.tipoDeMuestra);
           }
@@ -76,43 +180,3 @@ block content
           tiposMuestraContainer.appendChild(div);
         });
       }
-
-      // Buscar y seleccionar exámenes
-      examSearchInput.addEventListener("input", () => {
-        const searchTerm = examSearchInput.value.toLowerCase();
-        if (searchTerm === "") {
-          examResults.innerHTML = "";
-          return;
-        }
-
-        const filteredExams = examenes.filter(examen =>
-          examen.nombre_examen.toLowerCase().includes(searchTerm)
-        );
-
-        examResults.innerHTML = "";
-        filteredExams.forEach(examen => {
-          const option = document.createElement("option");
-          option.value = examen.id_examen;
-          option.textContent = `${examen.nombre_examen}`;
-          examResults.appendChild(option);
-        });
-      });
-
-      examResults.addEventListener("click", (event) => {
-        if (event.target.tagName === "OPTION") {
-          const selectedOption = event.target;
-
-          if (![...selectedExams.options].some(option => option.value === selectedOption.value)) {
-            selectedExams.appendChild(selectedOption.cloneNode(true));
-          }
-          updateTiposMuestra();
-          examResults.innerHTML = "";
-        }
-      });
-
-      selectedExams.addEventListener("dblclick", (event) => {
-        if (event.target.tagName === "OPTION") {
-          event.target.remove();
-          updateTiposMuestra();
-        }
-      });

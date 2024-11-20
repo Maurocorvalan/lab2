@@ -2,11 +2,22 @@ extends layout
 
 block content
   head
-    title Bioquímico
-
+    title Bioquimico
+    script.
+      // JavaScript para ocultar el mensaje de éxito después de 5 segundos
+      document.addEventListener("DOMContentLoaded", () => {
+        const successAlert = document.querySelector(".alert-success");
+        if (successAlert) {
+          setTimeout(() => {
+            successAlert.style.display = "none";
+          }, 5000); // 5000 milisegundos = 5 segundos
+        }
+      });
   body
     .container
       h1 Bienvenido #{nombreUsuario}
+       if query.success 
+        .alert.alert-success.mt-3= query.success
       .row
         .col-lg-12
           h2 Paciente

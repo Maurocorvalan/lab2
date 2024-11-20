@@ -26,6 +26,10 @@ const path = require("path");
 // Configuración de la vista
 app.set("view engine", "pug");
 app.set("views", path.join(__dirname, "views"));
+app.use((req, res, next) => {
+  res.locals.query = req.query;
+  next();
+});
 
 // Middleware para servir archivos estáticos desde la carpeta '/public'
 app.use(
@@ -124,11 +128,12 @@ function checkRole(roles) {
 app.use(flash());
 
 // Middleware para pasar los mensajes flash a las vistas
+app.use(require("connect-flash")());
 app.use((req, res, next) => {
-  res.locals.success_msg = req.flash("success_msg");
-  res.locals.error_msg = req.flash("error_msg");
+  res.locals.successMessage = req.flash("success");
   next();
 });
+
 // Rutas protegidas por roles
 app.use("/", pacienteRuta);
 app.use("/buscarOrdenes", buscarOrdenesRuta);

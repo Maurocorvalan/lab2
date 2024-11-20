@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const Paciente = require("./paciente");
-
+const TiposMuestra = require("./tipos_muestra");
 
 const Muestra = sequelize.define(
   "Muestra",
@@ -24,24 +24,36 @@ const Muestra = sequelize.define(
       allowNull: false,
       references: {
         model: Paciente,
-        key: "id_paciente", // Asegúrate de que coincida con la clave primaria de Paciente
+        key: "id_paciente",
       },
     },
-    Tipo_Muestra: {
-      type: DataTypes.STRING,
+    idTipoMuestra: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: TiposMuestra,
+        key: "idTipoMuestra",
+      },
     },
     Fecha_Recepcion: {
       type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
     estado: {
       type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "pendiente",
     },
   },
   {
     timestamps: false,
+    tableName: "muestra",
   }
 );
 
-Muestra.belongsTo(Paciente, { foreignKey: 'id_Paciente', as: 'Paciente' });
+// Relaciones
+Muestra.belongsTo(Paciente, { foreignKey: "id_Paciente", as: "Paciente" });
+Muestra.belongsTo(TiposMuestra, { foreignKey: "idTipoMuestra", as: "TipoMuestra" });
 
 module.exports = Muestra;

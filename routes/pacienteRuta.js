@@ -56,7 +56,7 @@ router.post("/buscar-paciente", async (req, res) => {
       });
     }
   } catch (error) {
-    error(error);
+    console.error(error);
     res.status(500).send("Error al buscar paciente por DNI, apellido o email.");
   }
 });
@@ -74,7 +74,7 @@ router.get("/editar-paciente/:id", async (req, res) => {
       const fechaNacimiento = paciente.fecha_nacimiento;
 
       // Agrega la línea de registro
-      log("Fecha de nacimiento:", fechaNacimiento);
+      console.log("Fecha de nacimiento:", fechaNacimiento);
 
       // Renderiza el formulario con los campos llenos, pasando el valor de "fechaNacimiento"
       res.render("ingresarPaciente", {
@@ -84,7 +84,7 @@ router.get("/editar-paciente/:id", async (req, res) => {
       });
     }
   } catch (error) {
-    error(error);
+    console.error(error);
     res.status(500).send("Error al seleccionar paciente para edición.");
   }
 });
@@ -130,12 +130,7 @@ router.post("/guardar-paciente", async (req, res) => {
         embarazo,
         diagnostico,
       });
-      log(
-        "Datos del paciente actualizados con éxito:",
-        nombre,
-        apellido,
-        dni
-      );
+      console.log("Datos del paciente actualizados con éxito:", dni);
 
       // Registro de auditoría
       await auditoriaController.registrar(
@@ -145,7 +140,7 @@ router.post("/guardar-paciente", async (req, res) => {
       );
     } else {
       // Crea un nuevo paciente
-      const newPaciente = await Paciente.create({
+      await Paciente.create({
         nombre,
         apellido,
         dni,
@@ -158,12 +153,7 @@ router.post("/guardar-paciente", async (req, res) => {
         diagnostico,
         fecha_registro: new Date(),
       });
-      log(
-        "Datos del paciente guardados con éxito:",
-        nombre,
-        apellido,
-        dni
-      );
+      console.log("Nuevo paciente guardado con éxito:", dni);
 
       // Registro de auditoría
       await auditoriaController.registrar(
@@ -171,24 +161,12 @@ router.post("/guardar-paciente", async (req, res) => {
         "Creación de Paciente",
         `Creación de un nuevo paciente con DNI: ${dni}`
       );
-
-      // Crear el nuevo usuario vinculado al paciente
-      const hashedPassword = await bcrypt.hash(dni, 10); // Encriptar el DNI como contraseña
-
-      const newUsuario = await Usuarios.create({
-        nombre_usuario: `${nombre} ${apellido}`,
-        rol: "paciente", // Definir el rol como paciente
-        correo_electronico: email,
-        password: hashedPassword, // Guardar la contraseña encriptada
-      });
-
-      log("Usuario creado con éxito:", newUsuario.nombre_usuario);
     }
 
-    // Redirigir a la página de generación de orden
-    res.redirect("/orden/generacion-orden");
+    // Redirigir con el DNI del paciente
+    res.redirect(`/orden/generacion-orden/${dni}`);
   } catch (error) {
-    error("Error al guardar el paciente o usuario:", error);
+    console.error("Error al guardar el paciente o usuario:", error);
     res
       .status(500)
       .send("Error al guardar el paciente o usuario en la base de datos.");
@@ -213,18 +191,18 @@ router.post("/eliminar-paciente/:dni", async (req, res) => {
 
     // Eliminar el paciente
     await paciente.destroy();
-    log(`Paciente con DNI ${dni} eliminado.`);
+    console.log(`Paciente con DNI ${dni} eliminado.`);
 
     // Eliminar el usuario asociado si existe
     if (usuario) {
       await usuario.destroy();
-      log(`Usuario con email ${paciente.email} eliminado.`);
+      console.log(`Usuario con email ${paciente.email} eliminado.`);
     }
 
     // Redirigir o enviar respuesta de éxito
     res.redirect("/tecnico"); // Redirigir a la lista de pacientes u otra página adecuada
   } catch (error) {
-    error("Error al eliminar el paciente o usuario:", error);
+    console.error("Error al eliminar el paciente o usuario:", error);
     res.status(500).send("Error al eliminar el paciente o usuario.");
   }
 });
