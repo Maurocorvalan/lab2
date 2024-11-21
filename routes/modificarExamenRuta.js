@@ -2,17 +2,28 @@ const express = require("express");
 const router = express.Router();
 const Examen = require("../models/examen");
 const auditoriaController = require("../routes/AuditoriaRuta");
-
+const TiposMuestra = require("../models/tipos_muestra");
 // Ruta para buscar y modificar exámenes
 router.get("/buscar-modificar-examen", async (req, res) => {
   try {
-    // Obtener todos los exámenes
-    const examenes = await Examen.findAll();
+    const examenes = await Examen.findAll({
+      attributes: [
+        "id_examen",
+        "nombre_examen",
+        "descripcion",
+        "codigo",
+        "estado", // Esto se pasará como tinyint desde la BD
+        "idTipoMuestra",
+        "tiempoDemora",
+      ],
+    });
 
-    res.render("buscarModificarExamen", { examenes });
+    const tiposMuestra = await TiposMuestra.findAll(); // Obtener los tipos de muestra
+
+    res.render("buscarModificarExamen", { examenes, tiposMuestra });
   } catch (error) {
-    error(error);
-    res.status(500).send("Error al obtener los exámenes.");
+    console.error(error);
+    res.status(500).send("Error al obtener los exámenes y tipos de muestra.");
   }
 });
 
@@ -51,7 +62,7 @@ router.post("/buscar-modificar-examen", async (req, res) => {
 
     res.render("buscarModificarExamen", { examen });
   } catch (error) {
-    error("Error al buscar y modificar el examen:", error);
+    console.error("Error al buscar y modificar el examen:", error);
     res.status(500).send("Error al buscar y modificar el examen.");
   }
 });
@@ -59,45 +70,41 @@ router.post("/buscar-modificar-examen", async (req, res) => {
 // Ruta para procesar la modificación del examen
 router.post("/modificar", async (req, res) => {
   try {
-    const { id_examen, nombre_examen, descripcion, codigo, estado } = req.body;
+    const { id_examen, nombre_examen, descripcion, codigo, estado, tipo_muestra, tiempo_demora } = req.body;
 
-    // Verifica que req.user esté definido y tiene dataValues
     if (!req.user || !req.user.dataValues) {
-      return res
-        .status(401)
-        .send("Usuario no autenticado o datos de usuario no disponibles.");
+      return res.status(401).send("Usuario no autenticado o datos de usuario no disponibles.");
     }
 
     const usuarioId = req.user.dataValues.id_Usuario;
 
-    // Obtén el examen por ID
     const examen = await Examen.findByPk(id_examen);
-
     if (!examen) {
       return res.status(404).send("Examen no encontrado");
     }
 
-    // Asigna nuevos valores
     examen.nombre_examen = nombre_examen;
     examen.descripcion = descripcion;
     examen.codigo = codigo;
-    examen.estado = parseInt(estado, 10);
+    examen.estado = estado === "1"; // Convertimos el valor al boolean
+    examen.idTipoMuestra = parseInt(tipo_muestra, 10);
+    examen.tiempoDemora = parseInt(tiempo_demora, 10);
 
-    // Actualiza el examen en la base de datos
     await examen.save();
 
-    log("Examen modificado con éxito.");
-
-    // Registro de auditoría
     await auditoriaController.registrar(
-      usuarioId, // usuarioId
-      "Modificación de Examen", // operación
-      `Modificación del examen con ID: ${id_examen}. Nuevos valores: nombre_examen: ${nombre_examen}, descripcion: ${descripcion}, codigo: ${codigo}, estado: ${estado}` // detalles
+      usuarioId,
+      "Modificación de Examen",
+      `Examen modificado: Nombre: ${nombre_examen}, Código: ${codigo}, Estado: ${estado}, Tipo de Muestra: ${tipo_muestra}, Tiempo de Demora: ${tiempo_demora}`
     );
 
-    res.redirect("/modificar-examen/buscar-modificar-examen");
+    res.render("buscarModificarExamen", {
+      examenes: await Examen.findAll(),
+      tiposMuestra: await TiposMuestra.findAll(),
+      successMessage: "Examen modificado con éxito.",
+    });
   } catch (error) {
-    error("Error al modificar el examen:", error);
+    console.error("Error al modificar el examen:", error);
     res.status(500).send("Error al modificar el examen.");
   }
 });

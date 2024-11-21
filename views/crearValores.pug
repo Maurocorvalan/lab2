@@ -7,7 +7,7 @@ block content
     script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js")
 
   div.container.margin-top-custom
-    h1 Crear/Editar Valores de Referencia
+    h1  Valores de Referencia
 
     // Buscar Determinación
     div.form-group
@@ -18,23 +18,20 @@ block content
       div#resultados_busqueda(style="position: absolute; z-index: 1000; display: none;")
         ul#lista_resultados(style="list-style: none; padding: 0; margin: 0;")
           each determinacion in determinaciones
-            li(class="resultado" data-id=determinacion.id_Determinacion data-unidad=determinacion.unidadMedida.nombreUnidadMedida) 
-              #{determinacion.Nombre_Determinacion}
+            li(class="resultado" data-id=determinacion.id_Determinacion data-unidad=determinacion.unidadMedida.nombreUnidadMedida data-examen=determinacion.examen.nombre_examen) 
+             | #{determinacion.Nombre_Determinacion}  - Examen: #{determinacion.examen.nombre_examen}
 
       // Select para las determinaciones (opciones ocultas)
       select#id_Determinacion(name="id_Determinacion" class="form-control" required style="display: none;")
         each determinacion in determinaciones
-          option(value=determinacion.id_Determinacion data-unidad=determinacion.unidadMedida.nombreUnidadMedida) 
-            #{determinacion.Nombre_Determinacion}
+          option(value=determinacion.id_Determinacion data-unidad=determinacion.unidadMedida.nombreUnidadMedida data-examen=determinacion.examen.nombre_examen) 
+           | #{determinacion.Nombre_Determinacion} - Examen: #{determinacion.examen.nombre_examen}
 
-    // Mostrar Unidad de Medida
-    div.form-group
-      label Unidad de Medida:
-      p#unidad_medida.text-muted No hay unidad de medida seleccionada.
+
 
     // Tabla de Valores de Referencia
     div.mt-4
-      h3 Valores de Referencia
+      h3 Valores de Referencia 
       table.table.table-bordered#valoresReferenciaTable
         thead
           tr
@@ -44,6 +41,7 @@ block content
             th Valor Mínimo
             th Valor Máximo
             th Estado
+            th Unidad de Medida
             th Acción
         tbody#valoresReferenciaBody
           // Aquí se insertarán las filas dinámicamente
@@ -54,7 +52,7 @@ block content
       // Botón para guardar valores de referencia
       button.btn.btn-success.mt-2#saveValoresReferencia(type="button" style="display: none") Guardar Valores de Referencia
 
-    // Modal de Confirmación
+    // Modal de Confirmación de Datos
     .modal#confirmationModal(tabindex="-1" role="dialog")
       .modal-dialog(role="document")
         .modal-content
@@ -68,10 +66,26 @@ block content
             button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancelar
             button.btn.btn-primary(type="button" id="confirmSubmit") Confirmar
 
+    // Modal de Confirmación de Eliminación
+    .modal#deleteModal(tabindex="-1" role="dialog")
+      .modal-dialog(role="document")
+        .modal-content
+          .modal-header
+            h5.modal-title Confirmación de Eliminación
+            button.close(type="button" data-bs-dismiss="modal" aria-label="Close")
+              span(aria-hidden="true") &times;
+          .modal-body
+            p#deleteModalContent ¿Estás seguro de eliminar el valor de referencia?
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancelar
+            button.btn.btn-danger(type="button" id="confirmDelete") Eliminar
+
     script.
       $(document).ready(function() {
         const determinaciones = !{JSON.stringify(determinaciones)};
-
+        let idValorReferenciaAEliminar = null;
+        const examen = $(this).data('examen');
+        $('#examen_nombre').text(examen);
         // Buscar determinación
         $('#buscar_determinacion').on('input', function() {
           const query = $(this).val().toLowerCase();
@@ -82,8 +96,9 @@ block content
               if (d.Nombre_Determinacion.toLowerCase().includes(query)) {
                 $('#lista_resultados').append(`<li class="resultado" 
                   data-id="${d.id_Determinacion}" 
-                  data-unidad="${d.unidadMedida.nombreUnidadMedida}">
-                  ${d.Nombre_Determinacion}
+                  data-unidad="${d.unidadMedida.nombreUnidadMedida}"
+                  data-examen="${d.examen.nombre_examen}">
+                  ${d.Nombre_Determinacion} - Examen: ${d.examen.nombre_examen}
                 </li>`);
               }
             });
@@ -99,10 +114,11 @@ block content
           const id = $(this).data('id');
           const unidadMedida = $(this).data('unidad');
           const nombre = $(this).text();
-
+          const examen = $(this).data('examen');
           $('#id_Determinacion').val(id); // Establecer valor del select
           $('#buscar_determinacion').val(nombre); // Actualizar el input
           $('#unidad_medida').text(unidadMedida); // Mostrar unidad de medida
+          $('#examen_nombre').text(examen); // Mostrar nombre del examen
           $('#resultados_busqueda').hide(); // Ocultar resultados
 
           // Obtener valores de referencia asociados a la determinación
@@ -111,7 +127,7 @@ block content
             const valoresReferencia = response.valoresReferencia;
 
             $('#valoresReferenciaBody').empty(); // Limpiar tabla
-            valoresReferencia.forEach(vr => addRow(vr));
+            valoresReferencia.forEach(vr => addRow(vr, unidadMedida));
 
             $('#addValorReferencia, #saveValoresReferencia').show(); // Mostrar botones
           } catch (error) {
@@ -122,10 +138,11 @@ block content
 
         // Agregar nueva fila para valores de referencia
         $('#addValorReferencia').on('click', function() {
-          addRow();
+          const unidadMedida = $('#unidad_medida').text(); // Obtener la unidad de medida actual
+          addRow({}, unidadMedida);
         });
 
-        function addRow(vr = {}) {
+        function addRow(vr = {}, unidadMedida = '') {
           const row = `
             <tr data-id="${vr.id_ValorReferencia || ''}">
               <td><input type="number" class="form-control" name="Edad_Minima" value="${vr.Edad_Minima || ''}" required></td>
@@ -144,16 +161,49 @@ block content
                   <option value="0" ${vr.Estado === 0 ? 'selected' : ''}>Inactivo</option>
                 </select>
               </td>
-              <td><button type="button" class="btn btn-danger btn-sm remove-row">Eliminar</button></td>
+              <td>${unidadMedida}</td>
+              <td>
+                <button type="button" class="btn btn-danger btn-sm delete-row">Eliminar</button>
+              </td>
             </tr>
           `;
 
           $('#valoresReferenciaBody').append(row);
         }
 
-        // Eliminar fila
-        $(document).on('click', '.remove-row', function() {
-          $(this).closest('tr').remove();
+        // Confirmación de Eliminación
+        $(document).on('click', '.delete-row', function() {
+          const row = $(this).closest('tr');
+          const id = row.data('id');
+          const determinacionNombre = $('#buscar_determinacion').val();
+          
+
+          // Mostrar modal
+          idValorReferenciaAEliminar = id;
+          $('#deleteModalContent').text(`¿Estás seguro de eliminar el valor de referencia para la determinación "${determinacionNombre}"?`);
+          const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+          deleteModal.show();
+        });
+
+        // Confirmar eliminación
+        $('#confirmDelete').on('click', function() {
+          if (!idValorReferenciaAEliminar) {
+            alert('Error al identificar el valor de referencia.');
+            return;
+          }
+
+          $.ajax({
+            url: `/valoresreferencia/eliminar/${idValorReferenciaAEliminar}`,
+            method: 'DELETE',
+            success: function(response) {
+              alert('Valor de referencia eliminado con éxito.');
+              location.reload();
+            },
+            error: function(error) {
+              alert('Error al eliminar el valor de referencia.');
+              console.error(error);
+            },
+          });
         });
 
         // Guardar valores de referencia

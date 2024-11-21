@@ -4,15 +4,24 @@ const ValoresReferencia = require("../models/valoresReferencia");
 const Determinacion = require("../models/determinacion");
 const UnidadMedida = require("../models/unidadMedida");
 const auditoriaController = require("../routes/AuditoriaRuta");
+const Examen = require("../models/examen");
 
+// Ruta para mostrar el formulario de creación de valores de referencia
 router.get("/crear-valores", async (req, res) => {
   try {
     const determinaciones = await Determinacion.findAll({
-      include: {
-        model: UnidadMedida,
-        as: "unidadMedida",
-        attributes: ["nombreUnidadMedida"],
-      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: "unidadMedida",
+          attributes: ["nombreUnidadMedida"],
+        },
+        {
+          model: Examen,
+          as: "examen",
+          attributes: ["nombre_examen"], // Solo traer el nombre del examen
+        },
+      ],
     });
 
     const valoresReferenciaExistentes = await ValoresReferencia.findAll();
@@ -23,6 +32,8 @@ router.get("/crear-valores", async (req, res) => {
     res.status(500).send("Error al cargar la vista.");
   }
 });
+
+// Ruta para obtener los valores de referencia asociados a una determinación
 router.get("/valores/:idDeterminacion", async (req, res) => {
   try {
     const { idDeterminacion } = req.params;
@@ -35,7 +46,7 @@ router.get("/valores/:idDeterminacion", async (req, res) => {
         "Sexo",
         "Valor_Referencia_Minimo",
         "Valor_Referencia_Maximo",
-        "Estado", // Asegúrate de incluir el campo Estado
+        "Estado",
       ],
     });
 
@@ -45,6 +56,7 @@ router.get("/valores/:idDeterminacion", async (req, res) => {
     res.status(500).send("Error al obtener los valores de referencia.");
   }
 });
+
 router.post("/guardar-valores", async (req, res) => {
   const { id_Determinacion, valoresReferencia } = req.body;
 
@@ -101,6 +113,11 @@ router.delete("/eliminar/:id", async (req, res) => {
     }
 
     await valorReferencia.destroy();
+    await auditoriaController.registrar(
+      req.user.dataValues.id_Usuario,
+      "Elimina valor de referencia",
+      `Se elimino el valor de referencia para la determinación ID: ${id}`
+    );
     res.status(200).json({ message: "Valor de referencia eliminado con éxito." });
   } catch (error) {
     console.error("Error al eliminar el valor de referencia:", error);
