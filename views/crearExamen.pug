@@ -18,7 +18,7 @@ block content
 
     .container.margin-top-custom
       h1 Crear Examen
-      form#crear-examen-form(action="/examen/crear-examen" method="post")
+      form#crear-examen-form(action="/examen/crear-examen" method="post" onsubmit="return showModal()")
         .form-group
           label(for="nombre_examen") Nombre del Examen:
           input#nombre_examen.form-control(type="text" name="nombre_examen" required)
@@ -28,4 +28,63 @@ block content
         .form-group
           label(for="codigo") Código del Examen:
           input#codigo.form-control(type="text" name="codigo" required)
-        button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de crear el examen?')") Crear Examen
+        .form-group
+          label(for="estado") Estado del Examen:
+          select#estado.form-control(name="estado" required)
+            option(value="" disabled selected) Selecciona un estado
+            option(value="1") Activo
+            option(value="0") Inactivo
+        .form-group
+          label(for="tiempo_demora") Tiempo de Demora (días):
+          input#tiempo_demora.form-control(type="number" name="tiempo_demora" min="0" required)
+        .form-group
+          label(for="tipo_muestra") Tipo de Muestra:
+          select#tipo_muestra.form-control(name="idTipoMuestra" required)
+            option(value="" disabled selected) Selecciona un tipo de muestra
+            each tipo in tiposMuestra
+              option(value=tipo.idTipoMuestra) #{tipo.tipoDeMuestra}
+        button.btn.btn-primary(type="submit") Crear Examen
+
+    // Modal de confirmación
+    .modal#confirmationModal(tabindex="-1" role="dialog")
+      .modal-dialog(role="document")
+        .modal-content
+          .modal-header
+            h5.modal-title Confirmación
+            button.close(type="button" data-dismiss="modal" aria-label="Close")
+              span(aria-hidden="true") &times;
+          .modal-body
+            p#modalContent Verifica los datos antes de confirmar.
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-dismiss="modal") Cancelar
+            button.btn.btn-primary(type="button" id="confirmSubmit") Confirmar
+
+    script.
+      const showModal = () => {
+        const nombreExamen = document.getElementById('nombre_examen').value;
+        const descripcion = document.getElementById('descripcion').value || "N/A";
+        const codigo = document.getElementById('codigo').value;
+        const estado = document.getElementById('estado').value === "1" ? "Activo" : "Inactivo";
+        const tiempoDemora = document.getElementById('tiempo_demora').value;
+        const tipoMuestra = document.getElementById('tipo_muestra');
+        const tipoMuestraText = tipoMuestra.options[tipoMuestra.selectedIndex].text;
+
+        // Rellenar contenido del modal
+        const modalContent = `
+          <strong>Nombre del Examen:</strong> ${nombreExamen}<br>
+          <strong>Descripción:</strong> ${descripcion}<br>
+          <strong>Código:</strong> ${codigo}<br>
+          <strong>Estado:</strong> ${estado}<br>
+          <strong>Tiempo de Demora:</strong> ${tiempoDemora} días<br>
+          <strong>Tipo de Muestra:</strong> ${tipoMuestraText}
+        `;
+        document.getElementById('modalContent').innerHTML = modalContent;
+
+        // Mostrar modal
+        $('#confirmationModal').modal('show');
+        return false;
+      };
+
+      document.getElementById('confirmSubmit').addEventListener('click', () => {
+        document.getElementById('crear-examen-form').submit();
+      });

@@ -99,6 +99,64 @@ router.post("/crear-determinacion/determinaciones", async (req, res) => {
   }
 });
 
+// Ruta DELETE para eliminar una determinación
+router.delete("/:idDeterminacion", async (req, res) => {
+  try {
+    const { idDeterminacion } = req.params;
+
+    const determinacion = await Determinacion.findByPk(idDeterminacion);
+    if (!determinacion) {
+      return res.status(404).json({ error: "Determinación no encontrada." });
+    }
+
+    await determinacion.destroy();
+
+    res.status(200).json({ message: "Determinación eliminada con éxito." });
+  } catch (error) {
+    console.error("Error al eliminar la determinación:", error);
+    res.status(500).json({ error: "Error al eliminar la determinación." });
+  }
+});
+
+
+
+
+
+
+
+
+router.get("/crear-determinacion/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const examenes = await Examen.findAll();
+    const unidadesMedida = await UnidadMedida.findAll({ raw: true });
+
+    const determinaciones = await Determinacion.findAll({
+      include: {
+        model: UnidadMedida,
+        as: "unidadMedida",
+        attributes: ["id_UnidadMedida", "nombreUnidadMedida"],
+      },
+    });
+
+    const serializedDeterminaciones = determinaciones.map(d => ({
+      ...d.toJSON(),
+      Unidad_Medida: d.unidadMedida?.id_UnidadMedida || null,
+      nombreUnidadMedida: d.unidadMedida?.nombreUnidadMedida || null,
+    }));
+
+    res.render("crearDeterminacion", {
+      examenes,
+      determinaciones: serializedDeterminaciones,
+      unidadesMedida,
+      idExamenSeleccionado: id, // Examen preseleccionado
+    });
+  } catch (error) {
+    console.error("Error al obtener los datos necesarios para la vista:", error);
+    res.status(500).send("Error al obtener los datos necesarios para la vista.");
+  }
+});
 
 
 module.exports = router;
