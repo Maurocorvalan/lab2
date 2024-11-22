@@ -175,15 +175,19 @@ block content
         $(document).on('click', '.delete-row', function() {
           const row = $(this).closest('tr');
           const id = row.data('id');
-          const determinacionNombre = $('#buscar_determinacion').val();
           
 
           // Mostrar modal
+          if(!id){
+            row.remove();
+          }else{       
           idValorReferenciaAEliminar = id;
+          const determinacionNombre = $('#buscar_determinacion').val();
+
           $('#deleteModalContent').text(`¿Estás seguro de eliminar el valor de referencia para la determinación "${determinacionNombre}"?`);
           const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
           deleteModal.show();
-        });
+        }});
 
         // Confirmar eliminación
         $('#confirmDelete').on('click', function() {
@@ -217,20 +221,42 @@ block content
 
           const rows = $('#valoresReferenciaBody tr');
           const valoresReferencia = [];
-
+          let allFieldsValid = true;
           rows.each(function() {
-            const row = $(this);
-            valoresReferencia.push({
-              id_ValorReferencia: row.data('id') || null,
-              Edad_Minima: row.find('input[name="Edad_Minima"]').val(),
-              Edad_Maxima: row.find('input[name="Edad_Maxima"]').val(),
-              Sexo: row.find('select[name="Sexo"]').val(),
-              Valor_Referencia_Minimo: row.find('input[name="Valor_Referencia_Minimo"]').val(),
-              Valor_Referencia_Maximo: row.find('input[name="Valor_Referencia_Maximo"]').val(),
-              Estado: parseInt(row.find('select[name="Estado"]').val(), 10),
+          const row = $(this);
+          const Edad_Minima = row.find('input[name="Edad_Minima"]').val();
+          const Edad_Maxima = row.find('input[name="Edad_Maxima"]').val();
+          const Sexo = row.find('select[name="Sexo"]').val();
+          const Valor_Referencia_Minimo = row.find('input[name="Valor_Referencia_Minimo"]').val();
+          const Valor_Referencia_Maximo = row.find('input[name="Valor_Referencia_Maximo"]').val();
+          const Estado = row.find('select[name="Estado"]').val();     
+          if(!Edad_Minima || !Edad_Maxima || !Sexo || !Valor_Referencia_Maximo || !Valor_Referencia_Minimo || !Estado){
+            allFieldsValid = false;
+            row.find('input, select').each(function () {
+              if (!$(this).val()) {
+                 $(this).addClass('is-invalid');
+              } else {
+                $(this).removeClass('is-invalid');
+              }
             });
-          });
-
+           } else {
+      // Si los campos están completos, eliminar resaltado
+           row.find('input, select').removeClass('is-invalid');
+           }
+               valoresReferencia.push({
+                id_ValorReferencia: row.data('id') || null,
+                Edad_Minima: Edad_Minima,
+                Edad_Maxima: Edad_Maxima,
+                Sexo: Sexo,
+                Valor_Referencia_Minimo: Valor_Referencia_Minimo,
+                Valor_Referencia_Maximo: Valor_Referencia_Maximo,
+                Estado: parseInt(Estado, 10),
+             });
+           });
+          if (!allFieldsValid) {
+           alert('Por favor, completa todos los campos en las filas antes de guardar.');
+           return;
+          }
           if (valoresReferencia.length === 0) {
             alert('Debes agregar al menos un valor de referencia.');
             return;
