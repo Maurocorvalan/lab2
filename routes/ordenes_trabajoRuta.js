@@ -28,6 +28,43 @@ async function obtenerIdTipoMuestra(nombreTipoMuestra) {
 router.get("/ordenes", (req, res) => {
   res.render("buscarPacientesOrdenes");
 });
+
+
+router.get("/ordenesAnalitica", async (req, res) => {
+  try {
+    const { page = 1 } = req.query; // Página solicitada, por defecto 1
+    const limit = 10; // Número de elementos por página
+    const offset = (page - 1) * limit;
+
+    // Obtener órdenes de trabajo con los datos del paciente
+    const { rows: ordenes, count: totalOrdenes } = await OrdenTrabajo.findAndCountAll({
+      limit,
+      offset,
+      include: {
+        model: Paciente,
+        attributes: ["nombre", "apellido"], // Incluir datos específicos del paciente
+        required: false, // Permite que órdenes sin paciente sean incluidas
+      },
+      order: [["Fecha_Creacion", "DESC"]],
+    });
+
+    // Total de páginas
+    const totalPages = Math.ceil(totalOrdenes / limit);
+console.log(ordenes)
+    // Renderizar la vista con los datos originales
+    res.render("muestrasOrden", {
+      ordenes, // Pasar el objeto completo tal como está
+      currentPage: parseInt(page, 10),
+      totalPages,
+    });
+  } catch (error) {
+    console.error("Error al obtener órdenes de trabajo:", error);
+    res.status(500).send("Error al cargar las órdenes de trabajo.");
+  }
+});
+
+
+
 router.get("/generacion-orden", async (req, res) => {
   try {
     // Obtener exámenes con sus tipos de muestra relacionados

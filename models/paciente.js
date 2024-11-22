@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-
 const Paciente = sequelize.define(
   "pacientes",
   {
@@ -55,5 +54,7 @@ const Paciente = sequelize.define(
     timestamps: false,
   }
 );
+
+
 
 module.exports = Paciente;

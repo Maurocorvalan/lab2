@@ -137,6 +137,8 @@ app.use((req, res, next) => {
 // Rutas protegidas por roles
 app.use("/", pacienteRuta);
 app.use("/buscarOrdenes", buscarOrdenesRuta);
+app.use("/", OrdenesTrabajoRuta);
+
 app.use("/orden", OrdenesTrabajoRuta);
 app.use("/examen", checkRole(["tecnico", "bioquimico", "admin"]), examenRuta);
 app.use(
