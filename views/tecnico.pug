@@ -14,12 +14,14 @@ block content
         }
       });
 
-
   body
     .container
       h1 Bienvenido #{nombreUsuario}
+      
+      // Mostrar mensaje de éxito (si existe en la query string)
       if query.success 
         .alert.alert-success.mt-3= query.success
+
       .row
         .col-lg-12
           h2 Paciente

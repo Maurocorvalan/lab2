@@ -138,6 +138,8 @@ router.post("/guardar-paciente", async (req, res) => {
         "Actualización de Paciente",
         `Actualización de datos del paciente con DNI: ${dni}`
       );
+      req.flash("success", `Paciente con DNI ${dni} actualizado con éxito.`);
+
     } else {
       // Crea un nuevo paciente
       await Paciente.create({
@@ -161,10 +163,11 @@ router.post("/guardar-paciente", async (req, res) => {
         "Creación de Paciente",
         `Creación de un nuevo paciente con DNI: ${dni}`
       );
+
     }
 
     // Redirigir con el DNI del paciente
-    res.redirect(`/orden/generacion-orden/${dni}`);
+    res.redirect(`/tecnico?success=El paciente se generó con éxito.`);
   } catch (error) {
     console.error("Error al guardar el paciente o usuario:", error);
     res

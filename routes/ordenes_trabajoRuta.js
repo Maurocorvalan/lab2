@@ -14,6 +14,17 @@ function sumarDias(fecha, dias) {
   resultado.setDate(resultado.getDate() + dias);
   return resultado;
 }
+async function obtenerIdTipoMuestra(nombreTipoMuestra) {
+  try {
+    const tipoMuestra = await TiposMuestra.findOne({
+      where: { tipoDeMuestra: nombreTipoMuestra },
+    });
+    return tipoMuestra ? tipoMuestra.idTipoMuestra : null;
+  } catch (error) {
+    console.error(`Error al obtener ID para tipo de muestra "${nombreTipoMuestra}":`, error);
+    return null;
+  }
+}
 router.get("/ordenes", (req, res) => {
   res.render("buscarPacientesOrdenes");
 });
@@ -90,11 +101,12 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
         examenesSelectedIds,
         id_paciente,
         dni_paciente,
-        tipos_muestra, // Este campo debe ser un array
+        tipos_muestra,
       } = req.body;
   
       const user = req.user;
-      console.log("--------------------------->", req.body);
+  
+      console.log("Datos recibidos:", req.body);
   
       // Verifica que el usuario esté autenticado
       if (!user || !user.dataValues) {
@@ -112,6 +124,22 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
           .send("El paciente debe estar seleccionado para generar una orden.");
       }
   
+      const idPacienteParsed = parseInt(id_paciente, 10);
+      if (isNaN(idPacienteParsed)) {
+        return res.status(400).send("El ID del paciente no es válido.");
+      }
+  
+      // Validar que el paciente existe en la base de datos
+      const paciente = await Paciente.findByPk(idPacienteParsed);
+      if (!paciente) {
+        console.log(`Paciente no encontrado: ID ${idPacienteParsed}`);
+        return res
+          .status(400)
+          .send("El paciente seleccionado no existe en la base de datos.");
+      }
+  
+      console.log(`Paciente encontrado: ${paciente.nombre} ${paciente.apellido}`);
+  
       // Validar que se seleccionaron exámenes
       if (!examenesSelectedIds || examenesSelectedIds.trim() === "") {
         return res
@@ -119,16 +147,13 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
           .send("Debe seleccionar al menos un examen para generar la orden.");
       }
   
-      // Obtener los IDs de los exámenes seleccionados
       const examenesSelectedIdsArray = examenesSelectedIds
         .split(",")
         .map((id_examen) => parseInt(id_examen))
-        .filter((id) => !isNaN(id)); // Filtrar valores no válidos
+        .filter((id) => !isNaN(id));
   
       if (examenesSelectedIdsArray.length === 0) {
-        return res
-          .status(400)
-          .send("No se seleccionaron exámenes válidos.");
+        return res.status(400).send("No se seleccionaron exámenes válidos.");
       }
   
       // Calcular el tiempo máximo de demora de los exámenes seleccionados
@@ -149,7 +174,7 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
   
       // Crear una nueva orden de trabajo
       const nuevaOrden = await OrdenTrabajo.create({
-        id_Paciente: id_paciente,
+        id_Paciente: idPacienteParsed,
         estado,
         dni: dni_paciente,
         Fecha_Creacion: new Date(),
@@ -157,6 +182,8 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
       });
   
       const nuevaOrdenId = nuevaOrden.id_Orden;
+  
+      console.log(`Orden creada con ID: ${nuevaOrdenId}`);
   
       // Asociar los exámenes a la orden
       for (const examenId of examenesSelectedIdsArray) {
@@ -184,7 +211,7 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
   
           await Muestra.create({
             id_Orden: nuevaOrdenId,
-            id_Paciente: id_paciente,
+            id_Paciente: idPacienteParsed,
             idTipoMuestra,
             Fecha_Recepcion: new Date(),
             estado: "pendiente",
@@ -201,42 +228,11 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
         `Generación de una nueva orden con ID: ${nuevaOrdenId}`
       );
   
-      // Redirigir según el rol del usuario
-      const rolesRedirect = {
-        
-        tecnico: "/tecnico",
-        recepcionista: "/recepcionista",
-        bioquimico: "/bioquimico",
-        admin: "/admin",
-      };
-  
-      const userRole = req.user.rol;
-      if (req.isAuthenticated() && rolesRedirect[userRole]) {
-        res.redirect(
-          `${rolesRedirect[userRole]}?success=Orden+generada+con+éxito`
-        );      } else {
-        res.status(403).send("Acceso no autorizado");
-      }
+      res.redirect(`/tecnico?success=Orden generada con exito.`);
     } catch (error) {
       console.error("Error al procesar el formulario:", error);
       res.status(500).send("Error al procesar el formulario.");
     }
   });
   
-  // Función para sumar días a una fecha
-  function sumarDias(fecha, dias) {
-    const nuevaFecha = new Date(fecha);
-    nuevaFecha.setDate(nuevaFecha.getDate() + dias);
-    return nuevaFecha;
-  }
-  
-  // Función para obtener el ID de tipo de muestra por su nombre
-  async function obtenerIdTipoMuestra(nombreTipoMuestra) {
-    const tipoMuestra = await TiposMuestra.findOne({
-      where: { tipoDeMuestra: nombreTipoMuestra },
-    });
-    return tipoMuestra ? tipoMuestra.idTipoMuestra : null;
-  }
-  
-
 module.exports = router;
