@@ -1,0 +1,58 @@
+extends layout
+
+block content
+  head
+    title Muestras de la Orden #{id_Orden}
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js")
+
+  body
+    .container
+      h1 Muestras de la Orden #{id_Orden}
+
+      // Mostrar mensajes de éxito o error
+      if success
+        .alert.alert-success.alert-dismissible.fade.show(role="alert")
+          strong 
+          | #{success}
+          button.btn-close(type="button" data-bs-dismiss="alert" aria-label="Close")
+      if error
+        .alert.alert-danger.alert-dismissible.fade.show(role="alert")
+          strong Error: 
+          | #{error}
+          button.btn-close(type="button" data-bs-dismiss="alert" aria-label="Close")
+
+      if muestras.length > 0
+        table.table.table-striped.mt-4
+          thead
+            tr
+              th #ID Muestra
+              th Tipo de Muestra
+              th Fecha Recepción
+              th Estado
+          tbody
+            each muestra in muestras
+              tr
+                td= muestra.id_Muestra
+                td= muestra.TipoMuestra.tipoDeMuestra
+                td= muestra.Fecha_Recepcion ? muestra.Fecha_Recepcion.toISOString().split('T')[0] : 'No disponible'
+                td= muestra.estado
+
+        // Botón para abrir el modal
+        button.btn.btn-warning.mt-4#btnPreInformar(type="button" data-bs-toggle="modal" data-bs-target="#confirmModal") Pre Informar
+
+        // Modal de confirmación
+        .modal.fade#confirmModal(tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true")
+          .modal-dialog
+            .modal-content
+              .modal-header
+                h5.modal-title#confirmModalLabel Confirmar Acción
+                button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+              .modal-body
+                p ¿Estás seguro de actualizar el estado de todas las muestras de esta orden a "Pre-Informe"?
+              .modal-footer
+                button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancelar
+                form(action=`/muestras/preinformar/${id_Orden}` method="POST" id="confirmForm")
+                  button.btn.btn-warning(type="submit") Aceptar
+      else
+        p.text-muted No hay muestras asociadas a esta orden.
+        a.btn.btn-primary.mt-4(href="/ordenesAnalitica") Volver a Órdenes de Trabajo

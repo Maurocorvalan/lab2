@@ -1,4 +1,5 @@
 const express = require("express");
+const { Op } = require("sequelize");
 const router = express.Router();
 const OrdenTrabajo = require("../models/ordenes_trabajo");
 const Muestra = require("../models/muestra");
@@ -7,7 +8,8 @@ const Paciente = require("../models/paciente");
 const OrdenesExamenes = require("../models/ordenes_examen");
 const auditoriaController = require("../routes/AuditoriaRuta");
 const TiposMuestra = require("../models/tipos_muestra");
-
+const Determinaciones = require("../models/determinacion");
+const ValoresReferencia = require("../models/valoresreferencia");
 // Función para sumar días a una fecha
 function sumarDias(fecha, dias) {
   const resultado = new Date(fecha);
@@ -50,7 +52,6 @@ router.get("/ordenesAnalitica", async (req, res) => {
 
     // Total de páginas
     const totalPages = Math.ceil(totalOrdenes / limit);
-console.log(ordenes)
     // Renderizar la vista con los datos originales
     res.render("muestrasOrden", {
       ordenes, // Pasar el objeto completo tal como está
@@ -271,5 +272,125 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
       res.status(500).send("Error al procesar el formulario.");
     }
   });
+
+
+
+  // Endpoint para ver las muestras de una orden
+  router.get("/muestras/ver/:id_Orden", async (req, res) => {
+    const { id_Orden } = req.params;
   
+    try {
+      // Buscar muestras asociadas a la orden de trabajo
+      const muestras = await Muestra.findAll({
+        where: { id_Orden },
+        include: [
+          {
+            model: TiposMuestra,
+            as: "TipoMuestra",
+            attributes: ["tipoDeMuestra"], // Solo traer el tipo de muestra
+          },
+        ],
+      });
+  
+      // Verificar si hay muestras asociadas
+      if (!muestras || muestras.length === 0) {
+        return res.status(404).render("no-muestras", { id_Orden });
+      }
+  
+      // Renderizar la vista con las muestras obtenidas
+      res.render("ver-muestras", { muestras, id_Orden });
+    } catch (error) {
+      console.error("Error al obtener las muestras:", error);
+      res.status(500).send("Ocurrió un error al obtener las muestras.");
+    }
+  });
+  
+  // Endpoint para actualizar el estado de todas las muestras de una orden a Pre-Informe
+  router.post("/muestras/preinformar/:id_Orden", async (req, res) => {
+    const { id_Orden } = req.params;
+  
+    try {
+      // Verificar si ya están en estado Pre-Informe
+      const muestrasPendientes = await Muestra.count({
+        where: {
+          id_Orden,
+          estado: { [Op.ne]: "Pre-Informe" }, // Contar muestras que no están en Pre-Informe
+        },
+      });
+  
+      if (muestrasPendientes === 0) {
+        // Todas las muestras ya están en Pre-Informe
+        return res.render("ver-muestras", {
+          muestras: await Muestra.findAll({
+            where: { id_Orden },
+            include: [
+              {
+                model: TiposMuestra,
+                as: "TipoMuestra",
+                attributes: ["tipoDeMuestra"],
+              },
+            ],
+          }),
+          id_Orden,
+          success: null,
+          error: "Todas las muestras ya están en estado Pre-Informe.",
+        });
+      }
+  
+      // Actualizar muestras pendientes a estado Pre-Informe
+      const [updatedRows] = await Muestra.update(
+        { estado: "Pre-Informe" },
+        { where: { id_Orden, estado: { [Op.ne]: "Pre-Informe" } } }
+      );
+  
+      if (updatedRows > 0) {
+        // Redirigir a la vista con un mensaje de éxito
+        return res.render("ver-muestras", {
+          muestras: await Muestra.findAll({
+            where: { id_Orden },
+            include: [
+              {
+                model: TiposMuestra,
+                as: "TipoMuestra",
+                attributes: ["tipoDeMuestra"],
+              },
+            ],
+          }),
+          id_Orden,
+          success: "Muestras actualizadas con éxito.",
+          error: null,
+        });
+      }
+  
+      // Si no se actualizaron filas (fallo inesperado)
+      return res.render("ver-muestras", {
+        muestras: await Muestra.findAll({
+          where: { id_Orden },
+          include: [
+            {
+              model: TiposMuestra,
+              as: "TipoMuestra",
+              attributes: ["tipoDeMuestra"],
+            },
+          ],
+        }),
+        id_Orden,
+        success: null,
+        error: "No se pudieron actualizar las muestras.",
+      });
+    } catch (error) {
+      console.error("Error al actualizar el estado de las muestras:", error);
+      res.status(500).send("Ocurrió un error al actualizar el estado de las muestras.");
+    }
+  });
+
+
+
+
+
+  
+
+
+
+
 module.exports = router;
