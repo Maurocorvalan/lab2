@@ -1,5 +1,4 @@
 extends layout
-
 block content
   head
     title Muestras de la Orden #{id_Orden}
@@ -9,7 +8,6 @@ block content
     .container
       h1 Muestras de la Orden #{id_Orden}
 
-      // Mostrar mensajes de éxito o error
       if success
         .alert.alert-success.alert-dismissible.fade.show(role="alert")
           strong 
@@ -29,6 +27,7 @@ block content
               th Tipo de Muestra
               th Fecha Recepción
               th Estado
+              th Acciones
           tbody
             each muestra in muestras
               tr
@@ -36,11 +35,12 @@ block content
                 td= muestra.TipoMuestra.tipoDeMuestra
                 td= muestra.Fecha_Recepcion ? muestra.Fecha_Recepcion.toISOString().split('T')[0] : 'No disponible'
                 td= muestra.estado
+                td 
+                  form(action=`/muestras/imprimir/${muestra.id_Muestra}` method="GET" target="_blank")
+                    button.btn.btn-primary(type="submit") Imprimir Etiqueta
 
-        // Botón para abrir el modal
         button.btn.btn-warning.mt-4#btnPreInformar(type="button" data-bs-toggle="modal" data-bs-target="#confirmModal") Pre Informar
 
-        // Modal de confirmación
         .modal.fade#confirmModal(tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true")
           .modal-dialog
             .modal-content

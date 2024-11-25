@@ -1,33 +1,50 @@
-extends layout 
+extends layout
 
 block content
-  h1 Registrar Resultados
-  if orden && orden.length > 0
-    h2 Orden: #{orden[0].OrdenID} - Paciente: #{orden[0].NombrePaciente} #{orden[0].ApellidoPaciente}
-    p Edad: #{orden[0].EdadPaciente} años | Género: #{orden[0].SexoPaciente}
-    form(method="POST" action="/registrarResultados")
-      input(type="hidden" name="idOrden" value=orden[0].OrdenID)
-      table.table.table-striped
-        thead
-          tr
-            th Examen
-            th Determinación
-            th Unidad de Medida
-            th Valor de Referencia
-            th Género del Valor de Referencia
-            th Resultado
-        tbody
-          each item in orden
+  .container
+    h1.text-center.mt-4 Registrar Resultados
+
+    if orden && orden.length > 0
+      .row
+        .col-lg-12
+          h2 Orden: #{orden[0].OrdenID} - Paciente: #{orden[0].NombrePaciente} #{orden[0].ApellidoPaciente}
+          p Edad: #{orden[0].EdadPaciente} años | Género: #{orden[0].SexoPaciente}
+      
+      form(method="POST" action="/registrarResultados" class="mt-4")
+        input(type="hidden" name="idOrden" value=orden[0].OrdenID)
+        table.table.table-striped
+          thead
             tr
-              td= item.NombreExamen
-              td= item.NombreDeterminacion
-              td= item.UnidadMedidaDeterminacion
-              td #{item.ValorReferenciaMinimo} - #{item.ValorReferenciaMaximo}
-              td= item.SexoValorReferencia == 'M' ? 'Masculino' : 'Femenino' 
-              td
-                input.form-control(type="text" name=`resultado_${item.DeterminacionID}` placeholder="Ingrese resultado")
-                // Campo oculto para la unidad de medida
-                input(type="hidden" name=`unidad_${item.DeterminacionID}` value=item.UnidadMedidaDeterminacion)
-      button.btn.btn-primary(type="submit") Guardar Resultados
-  else
-    p No se encontraron resultados a analizar para esta orden.
+              th Examen
+              th Determinación
+              th Unidad de Medida
+              th Valor de Referencia
+              th Género del Valor de Referencia
+              th Resultado
+          tbody
+            each item in orden
+              tr
+                td= item.NombreExamen
+                td= item.NombreDeterminacion
+                td= item.UnidadMedidaDeterminacion
+                td #{item.ValorReferenciaMinimo} - #{item.ValorReferenciaMaximo}
+                td= item.SexoValorReferencia == 'M' ? 'Masculino' : 'Femenino' 
+                td
+                  // Mostrar el valor si viene desde modificar y ya existe un resultado
+                  input.form-control(
+                    type="text" 
+                    name=`resultado_${item.DeterminacionID}` 
+                    placeholder="Ingrese resultado" 
+                    value=item.ResultadoValor || ""
+                  )
+                  // Campo oculto para la unidad de medida
+                  input(type="hidden" name=`unidad_${item.DeterminacionID}` value=item.UnidadMedidaDeterminacion)
+        button.btn.btn-primary.mt-3(type="submit") Guardar Resultados
+
+      // Botón para volver a validar
+      .mt-4
+        a.btn.btn-secondary(href=`/validarResultados/${orden[0].OrdenID}`) Volver a Validar
+    else
+      .row
+        .col-lg-12.text-center
+          p.text-muted No se encontraron resultados a analizar para esta orden.

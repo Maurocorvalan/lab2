@@ -13,11 +13,15 @@ block content
           }, 5000); // 5000 milisegundos = 5 segundos
         }
       });
+
   body
     .container
       h1 Bienvenido #{nombreUsuario}
-       if query.success 
+      
+      // Mostrar mensaje de éxito (si existe en la query string)
+      if query.success 
         .alert.alert-success.mt-3= query.success
+
       .row
         .col-lg-12
           h2 Paciente
@@ -29,6 +33,14 @@ block content
           a(href="/orden/generacion-orden" class="btn btn-success btn-block mt-3") Generar Orden
         .col-lg-12
           a(href="/BuscarOrdenes/ordenes" class="btn btn-primary btn-block mt-3") Actualizar Orden
+        .col-lg-12
+          a(href="/buscarOrdenes/ordenes/informadas" class="btn btn-info btn-block mt-3") Ver Órdenes Informadas  
+
+      .row
+        .col-lg-12
+           h2 Muestras de órdenes pendientes
+           a(href="/ordenesAnalitica" class="btn btn-success btn-block mt-3") A analizar
+           a(href="/pendientesAValidar" class="btn btn-warning btn-block mt-3") Pendientes a Validar
 
       .row
         .col-lg-12
@@ -41,8 +53,6 @@ block content
         .col-lg-12
           h2 Determinaciones
           a(href="/determinacion/crear-determinacion" class="btn btn-success btn-block mt-3") Generar Determinación
-        .col-lg-12
-          a(href="/modificar-determinacion/modificar-determinacion" class="btn btn-primary btn-block mt-3") Actualizar Determinación
 
       .row
         .col-lg-12
