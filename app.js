@@ -100,7 +100,9 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id_Usuario, done) => {
   try {
-    const user = await User.findByPk(id_Usuario);
+    const user = await User.findByPk(id_Usuario, {
+      attributes: ["id_Usuario", "correo_electronico", "rol"], // Incluye correo electrónico
+    });
     if (!user) {
       done(null, false);
     } else {
@@ -216,6 +218,8 @@ app.post('/login', (req, res, next) => {
           return res.redirect('/bioquimico');
         case 'admin':
           return res.redirect('/admin');
+          case 'paciente':
+            return res.redirect('/portalPaciente')
         default:
           return res.status(403).send('Acceso no autorizado');
       }
@@ -289,6 +293,16 @@ app.get("/bioquimico", (req, res) => {
 app.get("/admin", (req, res) => {
   if (req.isAuthenticated() && req.user.rol === "admin") {
     res.render("admin", { nombreUsuario: req.user.nombre_usuario });
+  } else {
+    res.status(403).send("Acceso no autorizado");
+  }
+});
+app.get("/portalPaciente", (req, res) => {
+  if (
+    req.isAuthenticated() &&
+    (req.user.rol === "paciente" || req.user.rol === "admin")
+  ) {
+    res.render("portalPaciente", { nombreUsuario: req.user.nombre_usuario });
   } else {
     res.status(403).send("Acceso no autorizado");
   }

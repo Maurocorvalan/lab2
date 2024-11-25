@@ -2,9 +2,9 @@ const express = require("express");
 const { Op } = require("sequelize");
 const router = express.Router();
 const sequelize = require("../config/database"); // Asegúrate de que sea tu configuración Sequelize
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require("path");
 
 const OrdenTrabajo = require("../models/ordenes_trabajo");
 const Muestra = require("../models/muestra");
@@ -392,8 +392,8 @@ router.post("/muestras/preinformar/:id_Orden", async (req, res) => {
 // Ruta para renderizar la vista "registrarResultados"
 router.get("/registrarResultados/:id_Orden", async (req, res) => {
   const idOrden = req.params.id_Orden;
-  const modificar = req.query.modificar === "true"; 
-  
+  const modificar = req.query.modificar === "true";
+
   // Detectar si viene desde el botón "Modificar Resultados"
 
   try {
@@ -462,7 +462,7 @@ router.get("/registrarResultados/:id_Orden", async (req, res) => {
   }
 });
 
-router.post('/registrarResultados', async (req, res) => {
+router.post("/registrarResultados", async (req, res) => {
   const { idOrden, ...campos } = req.body;
 
   let transaction;
@@ -473,8 +473,8 @@ router.post('/registrarResultados', async (req, res) => {
 
     // Iterar sobre los campos enviados desde el formulario
     for (const key in campos) {
-      if (key.startsWith('resultado_')) {
-        const idDeterminacion = key.split('_')[1]; // Extraer el ID de la determinación
+      if (key.startsWith("resultado_")) {
+        const idDeterminacion = key.split("_")[1]; // Extraer el ID de la determinación
         const valor = campos[key]; // Valor ingresado para esta determinación
         const unidad = campos[`unidad_${idDeterminacion}`]; // Unidad asociada a esta determinación
 
@@ -550,26 +550,28 @@ router.post('/registrarResultados', async (req, res) => {
     await transaction.commit();
 
     // Redirigir al usuario o enviar una respuesta
-    res.status(200).send('Resultados registrados y actualizados correctamente.');
+    res
+      .status(200)
+      .send("Resultados registrados y actualizados correctamente.");
   } catch (error) {
-    console.error('Error al guardar los resultados:', error);
+    console.error("Error al guardar los resultados:", error);
 
     // Revertir transacción si hay un error
     if (transaction) await transaction.rollback();
 
-    res.status(500).send('Error al guardar los resultados. Por favor, intenta nuevamente.');
+    res
+      .status(500)
+      .send("Error al guardar los resultados. Por favor, intenta nuevamente.");
   }
 });
 
-
-
 //imprimir muestra
-router.get('/muestras/imprimir/:id_Muestra', async (req, res) => {
+router.get("/muestras/imprimir/:id_Muestra", async (req, res) => {
   const { id_Muestra } = req.params;
 
   try {
     // Verificar que la carpeta `temp` exista; si no, crearla
-    const tempDir = path.join(__dirname, '../temp');
+    const tempDir = path.join(__dirname, "../temp");
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
     }
@@ -580,25 +582,30 @@ router.get('/muestras/imprimir/:id_Muestra', async (req, res) => {
       include: [
         {
           model: TiposMuestra,
-          as: 'TipoMuestra',
-          attributes: ['tipoDeMuestra'],
+          as: "TipoMuestra",
+          attributes: ["tipoDeMuestra"],
         },
         {
           model: Paciente,
-          as: 'Paciente',
-          attributes: ['nombre', 'apellido', 'dni'],
+          as: "Paciente",
+          attributes: ["nombre", "apellido", "dni"],
         },
       ],
     });
 
     if (!muestra) {
-      return res.status(404).send('Muestra no encontrada.');
+      return res.status(404).send("Muestra no encontrada.");
     }
 
     // Crear el nombre del archivo PDF con ID de orden y nombre del paciente
     const filePath = path.join(
       tempDir,
-           `etiqueta-orden-${muestra.id_Orden}-paciente-${muestra.Paciente.nombre.replace(/\s+/g, '_')}-${muestra.Paciente.apellido.replace(/\s+/g, '_')}.pdf`
+      `etiqueta-orden-${
+        muestra.id_Orden
+      }-paciente-${muestra.Paciente.nombre.replace(
+        /\s+/g,
+        "_"
+      )}-${muestra.Paciente.apellido.replace(/\s+/g, "_")}.pdf`
     );
 
     // Crear el PDF
@@ -638,22 +645,22 @@ router.get('/muestras/imprimir/:id_Muestra', async (req, res) => {
     doc.end();
 
     // Esperar a que el PDF esté listo antes de enviarlo
-    stream.on('finish', () => {
-      res.setHeader('Content-Type', 'application/pdf');
+    stream.on("finish", () => {
+      res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
-        'Content-Disposition',
+        "Content-Disposition",
         `inline; filename=etiqueta-${id_Muestra}.pdf`
       );
       fs.createReadStream(filePath).pipe(res);
     });
 
-    stream.on('error', (error) => {
-      console.error('Error al escribir el archivo:', error);
-      res.status(500).send('Ocurrió un error al generar la etiqueta.');
+    stream.on("error", (error) => {
+      console.error("Error al escribir el archivo:", error);
+      res.status(500).send("Ocurrió un error al generar la etiqueta.");
     });
   } catch (error) {
-    console.error('Error al generar la etiqueta:', error);
-    res.status(500).send('Ocurrió un error al generar la etiqueta.');
+    console.error("Error al generar la etiqueta:", error);
+    res.status(500).send("Ocurrió un error al generar la etiqueta.");
   }
 });
 
@@ -664,17 +671,18 @@ router.get("/pendientesAValidar", async (req, res) => {
     const offset = (page - 1) * limit;
 
     // Obtener órdenes pendientes a validar
-    const { rows: ordenes, count: totalOrdenes } = await OrdenTrabajo.findAndCountAll({
-      limit,
-      offset,
-      where: { estado: "Para Validar" }, // Filtro para estado
-      include: {
-        model: Paciente,
-        attributes: ["nombre", "apellido"], // Incluir datos específicos del paciente
-        required: false, // Permite que órdenes sin paciente sean incluidas
-      },
-      order: [["Fecha_Creacion", "DESC"]],
-    });
+    const { rows: ordenes, count: totalOrdenes } =
+      await OrdenTrabajo.findAndCountAll({
+        limit,
+        offset,
+        where: { estado: "Para Validar" }, // Filtro para estado
+        include: {
+          model: Paciente,
+          attributes: ["nombre", "apellido"], // Incluir datos específicos del paciente
+          required: false, // Permite que órdenes sin paciente sean incluidas
+        },
+        order: [["Fecha_Creacion", "DESC"]],
+      });
 
     // Total de páginas
     const totalPages = Math.ceil(totalOrdenes / limit);
@@ -760,7 +768,7 @@ router.get("/validarResultados/:id_Orden", async (req, res) => {
   }
 });
 
-router.post('/confirmarValidacion', async (req, res) => {
+router.post("/confirmarValidacion", async (req, res) => {
   const { idOrden } = req.body;
 
   let transaction;
@@ -815,19 +823,22 @@ router.post('/confirmarValidacion', async (req, res) => {
     await transaction.commit();
 
     // Enviar respuesta al cliente
-    res.status(200).send('Validación confirmada y estados actualizados correctamente.');
+    res
+      .status(200)
+      .send("Validación confirmada y estados actualizados correctamente.");
   } catch (error) {
-    console.error('Error al confirmar validación:', error);
+    console.error("Error al confirmar validación:", error);
 
     // Revertir la transacción en caso de error
     if (transaction) await transaction.rollback();
 
-    res.status(500).send('Error al confirmar la validación. Por favor, intenta nuevamente.');
+    res
+      .status(500)
+      .send("Error al confirmar la validación. Por favor, intenta nuevamente.");
   }
 });
 
-
-router.get('/ordenesInformadas', async (req, res) => {
+router.get("/ordenesInformadas", async (req, res) => {
   try {
     // Consultar las órdenes con estado "Informada"
     const ordenesInformadas = await sequelize.query(
@@ -861,21 +872,20 @@ router.get('/ordenesInformadas', async (req, res) => {
     }));
 
     // Renderizar la vista
-    res.render('ordenesInformadas', { ordenes: ordenesConFormato });
+    res.render("ordenesInformadas", { ordenes: ordenesConFormato });
   } catch (error) {
-    console.error('Error al obtener órdenes informadas:', error);
-    res.status(500).send('Hubo un problema al cargar las órdenes informadas.');
+    console.error("Error al obtener órdenes informadas:", error);
+    res.status(500).send("Hubo un problema al cargar las órdenes informadas.");
   }
 });
 const formatDate = (date) => {
   if (!date) return null;
   const d = new Date(date);
   const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`; // Formato YYYY-MM-DD
 };
-
 
 // Endpoint para generar el PDF
 router.get("/generarPDF/:idOrden", async (req, res) => {
@@ -921,7 +931,9 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
 
     // Verificar si hay resultados
     if (resultados.length === 0) {
-      return res.status(404).json({ error: "No se encontraron resultados para esta orden." });
+      return res
+        .status(404)
+        .json({ error: "No se encontraron resultados para esta orden." });
     }
 
     // Crear un nuevo documento PDF
@@ -929,21 +941,31 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
 
     // Configurar encabezados para visualizar el PDF en el navegador
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "inline; filename=Orden_" + idOrden + ".pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "inline; filename=Orden_" + idOrden + ".pdf"
+    );
 
     // Enviar el PDF directamente al cliente
     doc.pipe(res);
 
     // Estilo del encabezado
     const paciente = resultados[0];
-    const sexo = paciente.sexo_paciente.toLowerCase() === "masculino" ? "Masculino" : "Femenino";
+    const sexo =
+      paciente.sexo_paciente.toLowerCase() === "masculino"
+        ? "Masculino"
+        : "Femenino";
     const logoPath = path.join(__dirname, "../public/logo_empresa.png"); // Ruta del logo
 
     // Encabezado con logo y título
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 50, 50, { width: 80 });
     }
-    doc.fontSize(16).text("Informe de Resultados de Laboratorio", 150, 60, { align: "center" });
+    doc
+      .fontSize(16)
+      .text("Informe de Resultados de Laboratorio", 150, 60, {
+        align: "center",
+      });
     doc.moveDown();
     doc.lineWidth(1).moveTo(50, 120).lineTo(550, 120).stroke();
 
@@ -954,8 +976,10 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
       `Paciente: ${paciente.nombre_paciente} ${paciente.apellido_paciente}`,
       `DNI: ${paciente.dni_paciente}`,
       `Sexo: ${sexo}`,
-      `Fecha de Ingreso: ${new Date(paciente.fecha_ingreso).toLocaleDateString()}`,
-      `Fecha de Orden: ${new Date(paciente.fecha_orden).toLocaleDateString()}`
+      `Fecha de Ingreso: ${new Date(
+        paciente.fecha_ingreso
+      ).toLocaleDateString()}`,
+      `Fecha de Orden: ${new Date(paciente.fecha_orden).toLocaleDateString()}`,
     ];
     datosPaciente.forEach((texto, index) => {
       doc.text(texto, 50 + (index % 2) * 250, 140 + Math.floor(index / 2) * 15);
@@ -973,7 +997,10 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
 
     // Recorrer cada examen y añadir al PDF
     for (const [nombreExamen, determinaciones] of Object.entries(examenes)) {
-      doc.fontSize(14).fillColor("#333333").text(nombreExamen, { underline: true });
+      doc
+        .fontSize(14)
+        .fillColor("#333333")
+        .text(nombreExamen, { underline: true });
       doc.moveDown();
 
       determinaciones.forEach((determinacion) => {
@@ -991,7 +1018,10 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
     }
 
     // Pie de página
-    doc.moveTo(50, doc.page.height - 50).lineTo(550, doc.page.height - 50).stroke();
+    doc
+      .moveTo(50, doc.page.height - 50)
+      .lineTo(550, doc.page.height - 50)
+      .stroke();
     doc.text("Firma: _________________________", 50, doc.page.height - 40);
     doc.text("Médico Responsable", 50, doc.page.height - 25);
 
@@ -1003,6 +1033,47 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
   }
 });
 
+router.get("/portalPaciente", async (req, res) => {
+  try {
+    const emailPaciente = req.user.correo_electronico;
+
+    // Consulta para obtener las órdenes informadas del paciente asociado al email
+    const ordenesInformadas = await sequelize.query(
+      `
+      SELECT 
+          ot.id_Orden AS OrdenID,
+          ot.Fecha_Creacion AS FechaCreacion,
+          ot.Fecha_Entrega AS FechaEntrega
+      FROM 
+          ordenes_trabajo ot
+      JOIN 
+          pacientes p ON ot.id_Paciente = p.id_Paciente
+      WHERE 
+          ot.estado = 'Informada' AND p.email = :email
+      ORDER BY 
+          ot.Fecha_Creacion DESC;
+      `,
+      {
+        replacements: { email: emailPaciente },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Formatear las fechas
+    const ordenesConFormato = ordenesInformadas.map((orden) => ({
+      ...orden,
+      FechaCreacion: formatDate(orden.FechaCreacion),
+      FechaEntrega: formatDate(orden.FechaEntrega),
+    }));
+
+    // Renderizar la vista con las órdenes del paciente
+    res.render("portalPaciente", { ordenes: ordenesConFormato });
+  } catch (error) {
+    console.error("Error al obtener órdenes informadas del paciente:", error);
+    res.status(500).send("Hubo un problema al cargar las órdenes informadas.");
+  }
+});
+
+// Función para formatear fechas
 
 module.exports = router;
-
