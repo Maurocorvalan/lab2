@@ -11,10 +11,7 @@ const Determinacion = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    id_ValorReferencia: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
+
     Nombre_Determinacion: {
       type: DataTypes.STRING,
     },
@@ -37,6 +34,7 @@ const Determinacion = sequelize.define(
   },
   {
     timestamps: false, // Deshabilita las columnas createdAt y updatedAt
+    tableName: "determinaciones"
   }
 );
 

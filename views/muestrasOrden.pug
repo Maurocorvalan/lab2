@@ -62,7 +62,7 @@ block content
               td= orden.Fecha_Creacion ? orden.Fecha_Creacion.toISOString().split("T")[0] : "No disponible"
               td= orden.Fecha_Entrega
               td
-                a.btn.btn-primary(href=`/ordenes/analizar/${orden.id_Orden}`) Analizar
+                a.btn.btn-primary(href=`/registrarResultados/${orden.id_Orden}`) Analizar
                 a.btn.btn-secondary.ms-2(href=`/muestras/ver/${orden.id_Orden}`) Ver Muestras
 
       // Paginación

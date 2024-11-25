@@ -28,5 +28,5 @@ const OrdenesExamenes = sequelize.define(
     autoIncrement: false,
   }
 );
-OrdenesExamenes.belongsTo(Examen, { foreignKey: "id_examen" });
+OrdenesExamenes.belongsTo(Examen, { foreignKey: "id_examen"});
 module.exports = OrdenesExamenes;

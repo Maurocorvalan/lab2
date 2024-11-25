@@ -1,51 +1,50 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
+const Determinacion = require("../models/determinacion");
+const OrdenesTrabajo = require("../models/ordenes_trabajo");
 
 const Resultado = sequelize.define(
-  "Resultado",
+  "resultados",
   {
     id_Resultado: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      allowNull: false,
-    },
-    id_Muestra: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "Muestras",
-        key: "id_Muestra",
-      },
-    },
-    id_determinacion: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "Determinaciones",
-        key: "id_Determinacion",
-      },
     },
     id_Orden: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: "ordenes_trabajo",
         key: "id_Orden",
       },
     },
-    valor_final: {
-      type: DataTypes.STRING,
-      allowNull: true,
+    id_Determinacion: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "determinaciones",
+        key: "id_Determinacion",
+      },
     },
-    fecha_resultado: {
-      type: DataTypes.DATE,
+    Valor: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    Unidad: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    Estado: {
+      type: DataTypes.STRING,
+      defaultValue: "Pendiente",
     },
   },
   {
-    tableName: "resultados",
     timestamps: false,
+    tableName: "resultados",
   }
 );
+
 
 module.exports = Resultado;
