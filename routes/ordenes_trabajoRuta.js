@@ -893,7 +893,10 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
         vr.Valor_Referencia_Maximo,
         p.nombre AS nombre_paciente,
         p.apellido AS apellido_paciente,
-        o.Fecha_Creacion AS fecha_orden
+        p.dni AS dni_paciente,
+        p.genero AS sexo_paciente,
+        o.Fecha_Creacion AS fecha_orden,
+        o.Fecha_Creacion AS fecha_ingreso
       FROM 
         resultados r
       INNER JOIN 
@@ -916,6 +919,7 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
       }
     );
 
+    // Verificar si hay resultados
     if (resultados.length === 0) {
       return res.status(404).json({ error: "No se encontraron resultados para esta orden." });
     }
@@ -923,18 +927,39 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
     // Crear un nuevo documento PDF
     const doc = new PDFDocument({ margin: 50 });
 
-    // Configurar encabezados para visualizar en el navegador
+    // Configurar encabezados para visualizar el PDF en el navegador
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=Orden_" + idOrden + ".pdf");
 
     // Enviar el PDF directamente al cliente
     doc.pipe(res);
 
-    // Cabecera del documento
-    doc.fontSize(16).text("Informe de Resultados de Laboratorio", { align: "center" });
+    // Estilo del encabezado
+    const paciente = resultados[0];
+    const sexo = paciente.sexo_paciente.toLowerCase() === "masculino" ? "Masculino" : "Femenino";
+    const logoPath = path.join(__dirname, "../public/logo_empresa.png"); // Ruta del logo
+
+    // Encabezado con logo y título
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, 50, 50, { width: 80 });
+    }
+    doc.fontSize(16).text("Informe de Resultados de Laboratorio", 150, 60, { align: "center" });
     doc.moveDown();
-    doc.fontSize(12).text(`Paciente: ${resultados[0].nombre_paciente} ${resultados[0].apellido_paciente}`);
-    doc.text(`Fecha de Orden: ${new Date(resultados[0].fecha_orden).toLocaleDateString()}`);
+    doc.lineWidth(1).moveTo(50, 120).lineTo(550, 120).stroke();
+
+    // Información del paciente
+    doc.moveDown(1);
+    doc.fontSize(12);
+    const datosPaciente = [
+      `Paciente: ${paciente.nombre_paciente} ${paciente.apellido_paciente}`,
+      `DNI: ${paciente.dni_paciente}`,
+      `Sexo: ${sexo}`,
+      `Fecha de Ingreso: ${new Date(paciente.fecha_ingreso).toLocaleDateString()}`,
+      `Fecha de Orden: ${new Date(paciente.fecha_orden).toLocaleDateString()}`
+    ];
+    datosPaciente.forEach((texto, index) => {
+      doc.text(texto, 50 + (index % 2) * 250, 140 + Math.floor(index / 2) * 15);
+    });
     doc.moveDown(2);
 
     // Agrupar los resultados por examen
@@ -948,15 +973,17 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
 
     // Recorrer cada examen y añadir al PDF
     for (const [nombreExamen, determinaciones] of Object.entries(examenes)) {
-      doc.fontSize(14).text(nombreExamen, { underline: true });
+      doc.fontSize(14).fillColor("#333333").text(nombreExamen, { underline: true });
       doc.moveDown();
 
       determinaciones.forEach((determinacion) => {
-        doc.fontSize(12).text(`Determinación: ${determinacion.Nombre_Determinacion}`);
-        doc.text(`Resultado: ${determinacion.valor_resultado} ${determinacion.unidad_resultado}`);
-        doc.text(
-          `Valores de Referencia: ${determinacion.Valor_Referencia_Minimo} - ${determinacion.Valor_Referencia_Maximo}`
-        );
+        const columna1 = `Determinación: ${determinacion.Nombre_Determinacion}`;
+        const columna2 = `Resultado: ${determinacion.valor_resultado} ${determinacion.unidad_resultado}`;
+        const columna3 = `Valores Ref.: ${determinacion.Valor_Referencia_Minimo} - ${determinacion.Valor_Referencia_Maximo}`;
+
+        doc.fontSize(12).text(columna1, 50, doc.y, { continued: true });
+        doc.text(` | ${columna2}`, { continued: true });
+        doc.text(` | ${columna3}`);
         doc.moveDown();
       });
 
@@ -964,8 +991,9 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
     }
 
     // Pie de página
-    doc.addPage();
-    doc.text("Firma: _________________________", { align: "left" });
+    doc.moveTo(50, doc.page.height - 50).lineTo(550, doc.page.height - 50).stroke();
+    doc.text("Firma: _________________________", 50, doc.page.height - 40);
+    doc.text("Médico Responsable", 50, doc.page.height - 25);
 
     // Finalizar y cerrar el documento
     doc.end();
@@ -974,6 +1002,7 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
     res.status(500).json({ error: "Error al generar el archivo PDF." });
   }
 });
+
 
 module.exports = router;
 
