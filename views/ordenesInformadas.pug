@@ -26,7 +26,7 @@ block content
               td= orden.DNIPaciente
               td
                 a.btn.btn-primary(href=`/registrarResultados/${orden.OrdenID}`) Modificar
-                button.btn.btn-secondary.ms-2(type="button") Imprimir
+                a.btn.btn-secondary.ms-2(href=`/generarPDF/${orden.OrdenID}` target="_blank") Imprimir
     else
       .row
         .col-lg-12.text-center

@@ -1,0 +1,48 @@
+extends layout
+
+block content
+  .container
+    h1.text-center.mt-4.text-primary Registrar Resultados
+
+    if orden && orden.length > 0
+      .row
+        .col-lg-12
+          h2.text-secondary Orden: #{orden[0].OrdenID} - Paciente: #{orden[0].NombrePaciente} #{orden[0].ApellidoPaciente}
+          p.text-muted Edad: #{orden[0].EdadPaciente} años | Género: #{orden[0].SexoPaciente == 'M' ? 'Masculino' : 'Femenino'}
+      
+      form(method="POST" action="/registrarResultados" class="mt-4")
+        input(type="hidden" name="idOrden" value=orden[0].OrdenID)
+        table.table.table-striped.table-hover.table-bordered
+          thead.table-dark
+            tr
+              th.text-center Examen
+              th.text-center Determinación
+              th.text-center Unidad de Medida
+              th.text-center Valor de Referencia
+              th.text-center Género del Valor de Referencia
+              th.text-center Resultado
+          tbody
+            each item in orden
+              tr
+                td.text-center= item.NombreExamen
+                td.text-center= item.NombreDeterminacion
+                td.text-center= item.UnidadMedidaDeterminacion
+                td.text-center #{item.ValorReferenciaMinimo} - #{item.ValorReferenciaMaximo}
+                td.text-center= item.SexoValorReferencia == 'M' ? 'Masculino' : 'Femenino' 
+                td.text-center
+                  // Mostrar el valor si viene desde modificar y ya existe un resultado
+                  input.form-control(
+                    type="text" 
+                    name=`resultado_${item.DeterminacionID}` 
+                    placeholder="Ingrese resultado" 
+                    value=item.ResultadoValor || ""
+                  )
+                  // Campo oculto para la unidad de medida
+                  input(type="hidden" name=`unidad_${item.DeterminacionID}` value=item.UnidadMedidaDeterminacion)
+        button.btn.btn-primary.mt-3(type="submit") Guardar Resultados
+
+
+    else
+      .row
+        .col-lg-12.text-center
+          p.text-muted No se encontraron resultados a analizar para esta orden.

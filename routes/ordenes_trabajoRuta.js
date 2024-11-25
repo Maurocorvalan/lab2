@@ -876,4 +876,104 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`; // Formato YYYY-MM-DD
 };
 
+
+// Endpoint para generar el PDF
+router.get("/generarPDF/:idOrden", async (req, res) => {
+  const { idOrden } = req.params;
+
+  try {
+    // Ejecutar la consulta para obtener los datos
+    const resultados = await sequelize.query(
+      `SELECT 
+        e.nombre_examen,
+        d.Nombre_Determinacion,
+        r.Valor AS valor_resultado,
+        r.Unidad AS unidad_resultado,
+        vr.Valor_Referencia_Minimo,
+        vr.Valor_Referencia_Maximo,
+        p.nombre AS nombre_paciente,
+        p.apellido AS apellido_paciente,
+        o.Fecha_Creacion AS fecha_orden
+      FROM 
+        resultados r
+      INNER JOIN 
+        determinaciones d ON r.id_Determinacion = d.id_Determinacion
+      INNER JOIN 
+        valoresreferencia vr ON d.id_Determinacion = vr.id_Determinacion
+      INNER JOIN 
+        examen e ON d.id_Examen = e.id_examen
+      INNER JOIN 
+        ordenes_trabajo o ON r.id_Orden = o.id_Orden
+      INNER JOIN 
+        pacientes p ON o.id_Paciente = p.id_paciente
+      WHERE 
+        o.id_Orden = :idOrden
+      ORDER BY 
+        e.nombre_examen, d.Nombre_Determinacion;`,
+      {
+        replacements: { idOrden },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    if (resultados.length === 0) {
+      return res.status(404).json({ error: "No se encontraron resultados para esta orden." });
+    }
+
+    // Crear un nuevo documento PDF
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Configurar encabezados para visualizar en el navegador
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=Orden_" + idOrden + ".pdf");
+
+    // Enviar el PDF directamente al cliente
+    doc.pipe(res);
+
+    // Cabecera del documento
+    doc.fontSize(16).text("Informe de Resultados de Laboratorio", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(12).text(`Paciente: ${resultados[0].nombre_paciente} ${resultados[0].apellido_paciente}`);
+    doc.text(`Fecha de Orden: ${new Date(resultados[0].fecha_orden).toLocaleDateString()}`);
+    doc.moveDown(2);
+
+    // Agrupar los resultados por examen
+    const examenes = resultados.reduce((acc, resultado) => {
+      if (!acc[resultado.nombre_examen]) {
+        acc[resultado.nombre_examen] = [];
+      }
+      acc[resultado.nombre_examen].push(resultado);
+      return acc;
+    }, {});
+
+    // Recorrer cada examen y añadir al PDF
+    for (const [nombreExamen, determinaciones] of Object.entries(examenes)) {
+      doc.fontSize(14).text(nombreExamen, { underline: true });
+      doc.moveDown();
+
+      determinaciones.forEach((determinacion) => {
+        doc.fontSize(12).text(`Determinación: ${determinacion.Nombre_Determinacion}`);
+        doc.text(`Resultado: ${determinacion.valor_resultado} ${determinacion.unidad_resultado}`);
+        doc.text(
+          `Valores de Referencia: ${determinacion.Valor_Referencia_Minimo} - ${determinacion.Valor_Referencia_Maximo}`
+        );
+        doc.moveDown();
+      });
+
+      doc.moveDown();
+    }
+
+    // Pie de página
+    doc.addPage();
+    doc.text("Firma: _________________________", { align: "left" });
+
+    // Finalizar y cerrar el documento
+    doc.end();
+  } catch (error) {
+    console.error("Error al generar el PDF:", error);
+    res.status(500).json({ error: "Error al generar el archivo PDF." });
+  }
+});
+
 module.exports = router;
+
