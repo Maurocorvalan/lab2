@@ -1,74 +1,33 @@
 extends layout
 
 block content
-  title Ordenes informadas
-  // Incluir Bootstrap CSS
-  link(rel='stylesheet', href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css')
-
   .container
-    .report-container
-      .header
-        link(rel='stylesheet', href='/public/css/style.css')
+    h1.text-center.mt-4 Órdenes Informadas
 
-      .order-info
-        h3 Ordenes informadas
-        if ordenes && ordenes.length
-          .row.mt-3
-            each orden in ordenes
-              .col-lg-4.mb-4
-                .card
-                  .card-body
-                    h5.card-title ID Orden: #{orden.id_Orden}
-                    p.card-text
-                      strong ID Paciente: #{orden.id_Paciente}
-                      br
-                      strong DNI: #{orden.dni}
-                      br
-                      strong Fecha de Creación: #{orden.Fecha_Creacion}
-                      br
-                      strong Fecha de Entrega: #{orden.Fecha_Entrega}
-                      br
-                      strong Estado: #{orden.estado_orden}
-
-                    h6 Información del Paciente
-                    p Nombre: #{orden.nombre} #{orden.apellido}
-                    p DNI: #{orden.dni}
-                    p Email: #{orden.email}
-                    p Teléfono: #{orden.telefono}
-                    p Dirección: #{orden.direccion}
-                    p Fecha de Nacimiento: #{orden.fecha_nacimiento}
-                    p Edad: #{orden.edad} Años
-                    p Embarazo: #{orden.embarazo ? 'Sí' : 'No'}
-                    p Diagnóstico: #{orden.diagnostico}
-
-                    // Botón para ver resultados detallados de la orden
-                    a(href=`/muestras/detalleOrden/${orden.id_Orden}` class="btn btn-primary mt-2") Ver Detalles
-
-        else
-          p No se encontró información de órdenes.
-
-  // Incluir la librería html2pdf.js
-  script(src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js')
-  script.
-    document.getElementById('printButton').addEventListener('click', function() {
-      const element = document.querySelector('.report-container');
-      if (!element) {
-        error('El elemento .report-container no se encontró');
-        return;
-      }
-
-      const opt = {
-        margin: [5, 5, 5, 5],
-        filename: 'reporte_ordenes.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 0.75, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
-        pdf.autoPrint();
-        window.open(pdf.output('bloburl'), '_blank');
-      }).catch(function(error) {
-        error('Error generando el PDF:', error);
-      });
-    });
+    if ordenes && ordenes.length > 0
+      table.table.table-striped.mt-4
+        thead
+          tr
+            th #ID Orden
+            th Fecha Creación
+            th Fecha Entrega
+            th Nombre del Paciente
+            th Apellido del Paciente
+            th DNI
+            th Acciones
+        tbody
+          each orden in ordenes
+            tr
+              td= orden.OrdenID
+              td= orden.FechaCreacion || "No disponible"
+              td= orden.FechaEntrega || "No disponible"
+              td= orden.NombrePaciente
+              td= orden.ApellidoPaciente
+              td= orden.DNIPaciente
+              td
+                a.btn.btn-primary(href=`/registrarResultados/${orden.OrdenID}`) Modificar
+                button.btn.btn-secondary.ms-2(type="button") Imprimir
+    else
+      .row
+        .col-lg-12.text-center
+          p.text-muted No hay órdenes con estado "Informada" disponibles.

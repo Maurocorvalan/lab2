@@ -392,7 +392,9 @@ router.post("/muestras/preinformar/:id_Orden", async (req, res) => {
 // Ruta para renderizar la vista "registrarResultados"
 router.get("/registrarResultados/:id_Orden", async (req, res) => {
   const idOrden = req.params.id_Orden;
-  const modificar = req.query.modificar === "true"; // Detectar si viene desde el botón "Modificar Resultados"
+  const modificar = req.query.modificar === "true"; 
+  
+  // Detectar si viene desde el botón "Modificar Resultados"
 
   try {
     // Consulta con LEFT JOIN para incluir los resultados
@@ -824,5 +826,54 @@ router.post('/confirmarValidacion', async (req, res) => {
   }
 });
 
+
+router.get('/ordenesInformadas', async (req, res) => {
+  try {
+    // Consultar las órdenes con estado "Informada"
+    const ordenesInformadas = await sequelize.query(
+      `
+      SELECT 
+          ot.id_Orden AS OrdenID,
+          ot.Fecha_Creacion AS FechaCreacion,
+          ot.Fecha_Entrega AS FechaEntrega,
+          p.Nombre AS NombrePaciente,
+          p.Apellido AS ApellidoPaciente,
+          p.dni AS DNIPaciente
+      FROM 
+          ordenes_trabajo ot
+      JOIN 
+          pacientes p ON ot.id_Paciente = p.id_Paciente
+      WHERE 
+          ot.estado = 'Informada'
+      ORDER BY 
+          ot.Fecha_Creacion DESC;
+      `,
+      {
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // Formatear las fechas
+    const ordenesConFormato = ordenesInformadas.map((orden) => ({
+      ...orden,
+      FechaCreacion: formatDate(orden.FechaCreacion),
+      FechaEntrega: formatDate(orden.FechaEntrega),
+    }));
+
+    // Renderizar la vista
+    res.render('ordenesInformadas', { ordenes: ordenesConFormato });
+  } catch (error) {
+    console.error('Error al obtener órdenes informadas:', error);
+    res.status(500).send('Hubo un problema al cargar las órdenes informadas.');
+  }
+});
+const formatDate = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`; // Formato YYYY-MM-DD
+};
 
 module.exports = router;
