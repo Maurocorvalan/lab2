@@ -101,7 +101,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id_Usuario, done) => {
   try {
     const user = await User.findByPk(id_Usuario, {
-      attributes: ["id_Usuario", "correo_electronico", "rol"], // Incluye correo electrónico
+      attributes: ["id_Usuario", "correo_electronico", "rol", "nombre_usuario"], // Incluye correo electrónico
     });
     if (!user) {
       done(null, false);
@@ -111,6 +111,17 @@ passport.deserializeUser(async (id_Usuario, done) => {
   } catch (error) {
     done(error);
   }
+});
+app.use((req, res, next) => {
+  res.locals.query = req.query;
+  if (req.isAuthenticated()) {
+    res.locals.rol = req.user.rol; // Agrega el rol a las vistas
+    res.locals.nombreUsuario = req.user.nombre_usuario; // Nombre del usuario
+  }else{
+    res.locals.rol = "";
+    res.locals.nombreUsuario = ""; // Nombre del usuario
+  }
+  next();
 });
 
 // Middleware para verificar roles
