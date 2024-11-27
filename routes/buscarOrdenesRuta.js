@@ -14,41 +14,63 @@ const sequelize = require("../config/database");
 
 // Ruta para buscar un paciente y mostrar sus órdenes de trabajo
 router.get("/ordenes", (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   res.render("buscarPacientesOrdenes");
 });
-router.post('/buscar-ordenes', async (req, res) => {
+router.post("/buscar-ordenes", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   const { idPaciente } = req.body;
 
-  console.log('Datos recibidos:', req.body); // Depuración
+  console.log("Datos recibidos:", req.body); // Depuración
 
   if (!idPaciente) {
-    return res.status(400).json({ error: 'ID de paciente no proporcionado.' });
+    return res.status(400).json({ error: "ID de paciente no proporcionado." });
   }
 
   try {
     const ordenes = await OrdenTrabajo.findAll({
-      where: { id_Paciente: idPaciente, estado: { [Op.not]: 'cancelada' } },
+      where: { id_Paciente: idPaciente, estado: { [Op.not]: "cancelada" } },
       include: {
         model: Paciente,
         attributes: ["nombre", "apellido", "dni", "id_Paciente"],
       },
-      attributes: ["id_Orden", "Fecha_Creacion", "Fecha_Entrega", "estado", "id_Paciente"],
+      attributes: [
+        "id_Orden",
+        "Fecha_Creacion",
+        "Fecha_Entrega",
+        "estado",
+        "id_Paciente",
+      ],
     });
 
     if (ordenes.length === 0) {
-      return res.json({ message: "No se encontraron órdenes para este paciente." });
+      return res.json({
+        message: "No se encontraron órdenes para este paciente.",
+      });
     }
 
     res.json(ordenes);
   } catch (error) {
-    console.error('Error al buscar órdenes:', error);
-    res.status(500).json({ error: 'Error al buscar órdenes de trabajo.' });
+    console.error("Error al buscar órdenes:", error);
+    res.status(500).json({ error: "Error al buscar órdenes de trabajo." });
   }
 });
 
-
 // Ruta para manejar la búsqueda de órdenes de trabajo por DNI del paciente
 router.post("/ordenes", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const { dniPaciente } = req.body;
 
@@ -58,11 +80,19 @@ router.post("/ordenes", async (req, res) => {
         model: Paciente,
         attributes: ["nombre", "apellido", "dni", "id_Paciente"],
       },
-      attributes: ["id_Orden", "Fecha_Creacion", "Fecha_Entrega", "estado", "id_Paciente"],
+      attributes: [
+        "id_Orden",
+        "Fecha_Creacion",
+        "Fecha_Entrega",
+        "estado",
+        "id_Paciente",
+      ],
     });
 
     if (ordenesTrabajo.length === 0) {
-      return res.json({ message: "No se encontraron órdenes para este paciente." });
+      return res.json({
+        message: "No se encontraron órdenes para este paciente.",
+      });
     }
 
     res.json(ordenesTrabajo);
@@ -74,6 +104,11 @@ router.post("/ordenes", async (req, res) => {
 
 // Ruta para obtener los detalles adicionales de una orden de trabajo
 router.get("/detalles/:id_Orden", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const { id_Orden } = req.params;
 
@@ -97,12 +132,19 @@ router.get("/detalles/:id_Orden", async (req, res) => {
     res.json(orden);
   } catch (error) {
     console.error("Error al obtener los detalles de la orden:", error);
-    res.status(500).json({ error: "Error al obtener los detalles de la orden." });
+    res
+      .status(500)
+      .json({ error: "Error al obtener los detalles de la orden." });
   }
 });
 
 // Ruta para mostrar el formulario de creación/modificación de órdenes
 router.get("/crear-modificar-orden/:idOrden", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const { idOrden } = req.params;
     const orden = await OrdenTrabajo.findByPk(idOrden, {
@@ -151,6 +193,11 @@ router.get("/crear-modificar-orden/:idOrden", async (req, res) => {
   }
 });
 router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const {
       estado,
@@ -177,7 +224,10 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
       return res.status(400).send("Debe seleccionar al menos un examen.");
     }
 
-    const examenesSelectedIdsArray = examenesSelectedIds.split(",").map(Number).filter(Boolean);
+    const examenesSelectedIdsArray = examenesSelectedIds
+      .split(",")
+      .map(Number)
+      .filter(Boolean);
     const examenesRemovedIdsArray = examenesRemovedIds
       ? examenesRemovedIds.split(",").map(Number).filter(Boolean)
       : [];
@@ -191,9 +241,12 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
     // Actualizar los datos básicos de la orden
     orden.estado = estado;
     orden.dni = dni_paciente;
-    orden.Fecha_Entrega = sumarDias(new Date(), await Examen.max("tiempoDemora", {
-      where: { id_examen: examenesSelectedIdsArray },
-    }));
+    orden.Fecha_Entrega = sumarDias(
+      new Date(),
+      await Examen.max("tiempoDemora", {
+        where: { id_examen: examenesSelectedIdsArray },
+      })
+    );
     await orden.save();
 
     // Manejar eliminación de exámenes y sus muestras asociadas
@@ -227,11 +280,14 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
               },
             ],
           });
-          
+
           if (remainingExams === 0) {
             // Eliminar la muestra si ya no es necesaria
             await Muestra.destroy({
-              where: { id_Orden: orden.id_Orden, idTipoMuestra: examen.tipoMuestra.idTipoMuestra },
+              where: {
+                id_Orden: orden.id_Orden,
+                idTipoMuestra: examen.tipoMuestra.idTipoMuestra,
+              },
             });
           }
         }
@@ -277,7 +333,9 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
 
     // Manejar tipos de muestra seleccionados manualmente
     if (tipos_muestra) {
-      const tiposMuestraArray = Array.isArray(tipos_muestra) ? tipos_muestra : [tipos_muestra];
+      const tiposMuestraArray = Array.isArray(tipos_muestra)
+        ? tipos_muestra
+        : [tipos_muestra];
 
       for (const tipoMuestra of tiposMuestraArray) {
         const idTipoMuestra = await obtenerIdTipoMuestra(tipoMuestra.trim());
@@ -326,9 +384,14 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
   }
 });
 
-router.get('/buscar-paciente-dinamico', async (req, res) => {
+router.get("/buscar-paciente-dinamico", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   const { query } = req.query;
-  
+
   try {
     const pacientes = await Paciente.findAll({
       where: {
@@ -339,20 +402,24 @@ router.get('/buscar-paciente-dinamico', async (req, res) => {
           { email: { [Op.like]: `%${query}%` } },
         ],
       },
-      attributes: ['id_Paciente', 'nombre', 'apellido', 'dni', 'email'], // Sólo selecciona los campos necesarios
+      attributes: ["id_Paciente", "nombre", "apellido", "dni", "email"], // Sólo selecciona los campos necesarios
     });
-    console.log(pacientes)
+    console.log(pacientes);
 
     res.json(pacientes);
   } catch (error) {
-    console.error('Error al buscar pacientes:', error);
-    res.status(500).json({ error: 'Error al buscar pacientes' });
+    console.error("Error al buscar pacientes:", error);
+    res.status(500).json({ error: "Error al buscar pacientes" });
   }
 });
 
-
 // Ruta para cancelar una orden
 router.post("/cancelar-orden/:idOrden", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const { idOrden } = req.params;
     const { descripcionCancelacion } = req.body;
@@ -367,7 +434,6 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
     await orden.save();
     req.flash("success", "Orden cancelada con éxito.");
     const rolesRedirect = {
-        
       tecnico: "/tecnico",
       recepcionista: "/recepcionista",
       bioquimico: "/bioquimico",
@@ -378,7 +444,8 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
     if (req.isAuthenticated() && rolesRedirect[userRole]) {
       res.redirect(
         `${rolesRedirect[userRole]}?success=Orden+cancelada+con+éxito`
-      );      } else {
+      );
+    } else {
       res.status(403).send("Acceso no autorizado");
     }
   } catch (error) {
@@ -389,6 +456,11 @@ router.post("/cancelar-orden/:idOrden", async (req, res) => {
 
 // Ruta para obtener órdenes informadas
 router.get("/ordenes/informadas", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const ordenes = await OrdenTrabajo.findAll({
       where: { estado: "informada" },
@@ -410,19 +482,19 @@ router.get("/ordenes/informadas", async (req, res) => {
     res.status(500).send("Error al obtener órdenes informadas.");
   }
 });
-  // Función para sumar días a una fecha
-  function sumarDias(fecha, dias) {
-    const nuevaFecha = new Date(fecha);
-    nuevaFecha.setDate(nuevaFecha.getDate() + dias);
-    return nuevaFecha;
-  }
-  
-  // Función para obtener el ID de tipo de muestra por su nombre
-  async function obtenerIdTipoMuestra(nombreTipoMuestra) {
-    const tipoMuestra = await TiposMuestra.findOne({
-      where: { tipoDeMuestra: nombreTipoMuestra },
-    });
-    return tipoMuestra ? tipoMuestra.idTipoMuestra : null;
-  }
-  
+// Función para sumar días a una fecha
+function sumarDias(fecha, dias) {
+  const nuevaFecha = new Date(fecha);
+  nuevaFecha.setDate(nuevaFecha.getDate() + dias);
+  return nuevaFecha;
+}
+
+// Función para obtener el ID de tipo de muestra por su nombre
+async function obtenerIdTipoMuestra(nombreTipoMuestra) {
+  const tipoMuestra = await TiposMuestra.findOne({
+    where: { tipoDeMuestra: nombreTipoMuestra },
+  });
+  return tipoMuestra ? tipoMuestra.idTipoMuestra : null;
+}
+
 module.exports = router;

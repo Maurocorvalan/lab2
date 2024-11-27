@@ -6,6 +6,11 @@ const auditoriaController = require("../routes/AuditoriaRuta");
 const TipoMuestra = require("../models/tipos_muestra");
 // Ruta para mostrar el formulario de creación de exámenes con valores de referencia
 router.get("/crear-examen", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
     const tiposMuestra = await TipoMuestra.findAll({
       attributes: ["idTipoMuestra", "tipoDeMuestra"],
@@ -20,12 +25,32 @@ router.get("/crear-examen", async (req, res) => {
 });
 // Ruta para procesar el formulario de creación de exámenes
 router.post("/crear-examen", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
   try {
-    const { nombre_examen, descripcion, codigo, estado, tiempo_demora, idTipoMuestra } = req.body;
+    const {
+      nombre_examen,
+      descripcion,
+      codigo,
+      estado,
+      tiempo_demora,
+      idTipoMuestra,
+    } = req.body;
 
     // Validar campos requeridos
-    if (!nombre_examen || !codigo || !idTipoMuestra || estado === undefined || tiempo_demora === undefined) {
-      return res.status(400).send("Todos los campos son obligatorios. Por favor, complétalos.");
+    if (
+      !nombre_examen ||
+      !codigo ||
+      !idTipoMuestra ||
+      estado === undefined ||
+      tiempo_demora === undefined
+    ) {
+      return res
+        .status(400)
+        .send("Todos los campos son obligatorios. Por favor, complétalos.");
     }
 
     // Convertir valores a tipos apropiados
@@ -33,12 +58,20 @@ router.post("/crear-examen", async (req, res) => {
     const tiempoDemoraParsed = parseInt(tiempo_demora, 10);
 
     // Validar estado y tiempo_demora
-    if (![0, 1].includes(estadoParsed) || isNaN(tiempoDemoraParsed) || tiempoDemoraParsed < 0) {
-      return res.status(400).send("Datos inválidos. Verifica los valores ingresados.");
+    if (
+      ![0, 1].includes(estadoParsed) ||
+      isNaN(tiempoDemoraParsed) ||
+      tiempoDemoraParsed < 0
+    ) {
+      return res
+        .status(400)
+        .send("Datos inválidos. Verifica los valores ingresados.");
     }
 
     if (!req.user || !req.user.dataValues) {
-      return res.status(401).send("Usuario no autenticado o datos de usuario no disponibles.");
+      return res
+        .status(401)
+        .send("Usuario no autenticado o datos de usuario no disponibles.");
     }
 
     const usuarioId = req.user.dataValues.id_Usuario;

@@ -5,6 +5,12 @@ const auditoriaController = require("../routes/AuditoriaRuta");
 const TiposMuestra = require("../models/tipos_muestra");
 // Ruta para buscar y modificar exámenes
 router.get("/buscar-modificar-examen", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const examenes = await Examen.findAll({
       attributes: [
@@ -29,6 +35,12 @@ router.get("/buscar-modificar-examen", async (req, res) => {
 
 // Ruta para procesar la búsqueda y mostrar el formulario de modificación
 router.post("/buscar-modificar-examen", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const { codigo, nombre_examen } = req.body;
 
@@ -69,6 +81,12 @@ router.post("/buscar-modificar-examen", async (req, res) => {
 
 // Ruta para procesar la modificación del examen
 router.post("/modificar", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const { id_examen, nombre_examen, descripcion, codigo, estado, tipo_muestra, tiempo_demora } = req.body;
 

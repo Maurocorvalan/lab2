@@ -160,6 +160,9 @@ html
           a(href="/examen/crear-examen") Generar Examen
           a(href="/modificar-examen/buscar-modificar-examen") Actualizar Examen
         if rol === "bioquimico" || rol === "tecnico" || rol === "admin"
+          h4 Determinaciones
+          a(href="/determinacion/crear-determinacion") Determinaciones
+                  if rol === "bioquimico" || rol === "tecnico" || rol === "admin"
           h4 Valores de Referencia
           a(href="/valoresreferencia/crear-valores") Valores de Referencia
         if rol === "admin" 

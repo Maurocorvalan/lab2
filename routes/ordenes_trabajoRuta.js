@@ -430,6 +430,8 @@ router.get("/registrarResultados/:id_Orden", async (req, res) => {
 
 router.post("/registrarResultados", async (req, res) => {
   const { idOrden, ...campos } = req.body;
+  const user = req.user;
+  const rol = res.locals.rol;
 
   let transaction;
 
@@ -516,9 +518,7 @@ router.post("/registrarResultados", async (req, res) => {
     await transaction.commit();
 
     // Redirigir al usuario o enviar una respuesta
-    res
-      .status(200)
-      .send("Resultados registrados y actualizados correctamente.");
+    res.render(`/${rol}`, { success: "Resultados guardados" });
   } catch (error) {
     console.error("Error al guardar los resultados:", error);
 

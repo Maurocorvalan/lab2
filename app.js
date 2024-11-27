@@ -160,6 +160,10 @@ function checkRole(roles) {
     }
   };
 }
+
+
+
+
 // Configurar flash messages
 app.use(flash());
 
@@ -171,11 +175,11 @@ app.use((req, res, next) => {
 });
 
 // Rutas protegidas por roles
-app.use("/", pacienteRuta);
-app.use("/buscarOrdenes", buscarOrdenesRuta);
-app.use("/", OrdenesTrabajoRuta);
+app.use("/",pacienteRuta);
+app.use("/buscarOrdenes", checkRole(["tecnico", "bioquimico", "admin", "recepcionista"]),buscarOrdenesRuta);
+app.use("/",OrdenesTrabajoRuta);
 
-app.use("/orden", OrdenesTrabajoRuta);
+app.use("/orden", checkRole(["tecnico", "bioquimico", "admin", "recepcionista"]),OrdenesTrabajoRuta);
 app.use("/examen", checkRole(["tecnico", "bioquimico", "admin"]), examenRuta);
 app.use(
   "/determinacion",
@@ -202,7 +206,7 @@ app.use(
   checkRole(["tecnico", "bioquimico", "admin"]),
   modificarValrefRuta
 );
-app.use("/muestras", muestrasRouter);
+app.use("/muestras", checkRole(["tecnico", "bioquimico", "admin", "recepcionista"]),muestrasRouter);
 
 // Ruta de inicio de sesión
 app.get('/login', (req, res) => {
@@ -451,6 +455,9 @@ app.get("/admin/actualizarUsuarioAdm", async (req, res) => {
 
 // Ruta POST para actualizar un usuario por administrador
 app.post("/admin/actualizar-usuario", upload.single("foto"), async (req, res) => {
+  if (req.isAuthenticated() && req.user.rol === "admin") {
+    const { nombre } = req.query;
+
   try {
     const { idUsuario, nombre, correo_electronico, password, rol } = req.body;
     const foto = req.file;
@@ -490,11 +497,14 @@ app.post("/admin/actualizar-usuario", upload.single("foto"), async (req, res) =>
       mensajeError: "Ocurrió un error al actualizar el usuario.",
     });
   }
-});
+}});
 
 
 // Ruta DELETE para eliminar un usuario por administrador
 app.delete("/admin/eliminarUsuarioAdm/:id", async (req, res) => {
+  if (req.isAuthenticated() && req.user.rol === "admin") {
+    const { nombre } = req.query;
+
   const idUsuario = req.params.id;
 
   try {
@@ -509,7 +519,7 @@ app.delete("/admin/eliminarUsuarioAdm/:id", async (req, res) => {
   } catch (error) {
     console.error("Error en el servidor: ", error);
     res.status(500).json({ error: "Error en el servidor" });
-  }
+  }}
 });
 
 // Ruta POST para crear un usuario por administrador
@@ -556,6 +566,7 @@ app.post("/admin/crear-usuario", upload.single("foto"), async (req, res) => {
 
 // Ruta GET para la vista de muestras
 app.get("/muestras", async (req, res) => {
+  
   try {
     // Renderiza la vista 'muestras.pug'
     res.render("muestras");
@@ -631,3 +642,4 @@ sequelize
   })
   .catch((error) => {
   });
+

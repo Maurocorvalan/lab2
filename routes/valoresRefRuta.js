@@ -8,6 +8,11 @@ const Examen = require("../models/examen");
 
 // Ruta para mostrar el formulario de creación de valores de referencia
 router.get("/crear-valores", async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
   try {
     const determinaciones = await Determinacion.findAll({
       include: [
@@ -35,6 +40,11 @@ router.get("/crear-valores", async (req, res) => {
 
 // Ruta para obtener los valores de referencia asociados a una determinación
 router.get("/valores/:idDeterminacion", async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
   try {
     const { idDeterminacion } = req.params;
     const valoresReferencia = await ValoresReferencia.findAll({
@@ -58,6 +68,11 @@ router.get("/valores/:idDeterminacion", async (req, res) => {
 });
 
 router.post("/guardar-valores", async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
   const { id_Determinacion, valoresReferencia } = req.body;
 
   try {
@@ -104,6 +119,11 @@ router.post("/guardar-valores", async (req, res) => {
 });
 
 router.delete("/eliminar/:id", async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
   const { id } = req.params;
 
   try {

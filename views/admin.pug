@@ -6,6 +6,12 @@ block content
 
   div.container
     h1 Bienvenido #{nombreUsuario}
+
+    // Mostrar el mensaje de éxito si existe
+    if success
+      div.alert.alert-success
+        | #{success} <!-- Mostrará el mensaje -->
+
     div.row.mt-5
       div.col
         a(href="/admin/crear-usuario" class="btn btn-primary") Crear Usuario

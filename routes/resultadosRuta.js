@@ -15,6 +15,12 @@ const fs = require("fs");
 
 // Ruta para buscar y mostrar muestras asociadas a una orden
 router.get("/mostrar/:id_orden", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   const id_orden = req.params.id_orden;
 
   try {
@@ -38,6 +44,12 @@ router.get("/mostrar/:id_orden", async (req, res) => {
 
 // Ruta para generar el PDF de una muestra específica utilizando pdfkit
 router.get("/:id_orden/generarPDFMuestra/:idMuestra", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   const idMuestra = req.params.idMuestra;
 
   try {
@@ -93,6 +105,12 @@ router.get("/:id_orden/generarPDFMuestra/:idMuestra", async (req, res) => {
 });
 // Ruta para mostrar la vista de añadir resultados
 router.get("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   const id_muestra = req.params.id_muestra;
 
   try {
@@ -128,6 +146,12 @@ router.get("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
 router.get(
   "/mostrar/aniadirResultados/:id_muestra/valoresReferencia/:id_determinacion",
   async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
+       const usuarioId = user.dataValues.id_Usuario;
     const id_determinacion = req.params.id_determinacion;
 
     try {
@@ -148,6 +172,11 @@ router.get(
 
 // Ruta para añadir un resultado
 router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
   const id_muestra = req.params.id_muestra;
   const { id_determinacion, valor_final, unidad_medida, custom_unidad_medida } =
     req.body;
@@ -205,6 +234,11 @@ router.post("/mostrar/aniadirResultados/:id_muestra", async (req, res) => {
 
 // Ruta para actualizar el estado de una muestra
 router.post("/actualizarEstado/:id_muestra", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
   const id_muestra = req.params.id_muestra;
   const { estado } = req.body;
 
@@ -248,6 +282,11 @@ router.post("/actualizarEstado/:id_muestra", async (req, res) => {
 
 // Ruta para actualizar el estado de una orden
 router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
   const id_orden = req.params.id_orden;
 
   // Verifica que req.user esté definido y tiene dataValues
@@ -287,6 +326,11 @@ router.post("/actualizarEstadoOrden/:id_orden", async (req, res) => {
 
 // Ruta para mostrar los detalles de una orden
 router.get("/detalleOrden/:id_orden", async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
   const idOrden = req.params.id_orden;
   const idUsuario = req.user ? req.user.id_Usuario : null; // Asumiendo que la ID del usuario está en req.user
 

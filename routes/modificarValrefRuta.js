@@ -7,6 +7,12 @@ const auditoriaController = require("../routes/AuditoriaRuta");
 
 // Ruta para mostrar el formulario de búsqueda y modificación de valores de referencia
 router.get("/buscar-valores-referencia", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const determinaciones = await Determinacion.findAll();
     res.render("buscarModificarValref", { determinaciones });
@@ -18,6 +24,12 @@ router.get("/buscar-valores-referencia", async (req, res) => {
 
 // Ruta para procesar la búsqueda de valores de referencia según la determinación
 router.post("/buscar-valores-referencia", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const { id_Determinacion } = req.body;
 
@@ -64,6 +76,12 @@ router.post("/buscar-valores-referencia", async (req, res) => {
 
 // Ruta para mostrar el formulario de creación/modificación de valores de referencia
 router.get("/crear-modificar-valores-referencia/:valorId", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const { valorId } = req.params;
 
@@ -87,6 +105,12 @@ router.get("/crear-modificar-valores-referencia/:valorId", async (req, res) => {
 router.post(
   "/crear-modificar-valores-referencia/:valorId",
   async (req, res) => {
+       // Verifica la autenticación del usuario
+       const user = req.user;
+       if (!user || !user.dataValues) {
+         return res.status(401).send("Usuario no autenticado.");
+       }
+       const usuarioId = user.dataValues.id_Usuario;
     try {
       const { valorId } = req.params;
       const {
@@ -173,6 +197,12 @@ router.post(
 
 // Ruta para procesar la creación de un nuevo valor de referencia
 router.post("/agregar-nuevo-valor-referencia", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const {
       id_Determinacion,
@@ -225,6 +255,12 @@ router.post("/agregar-nuevo-valor-referencia", async (req, res) => {
 });
 // Ruta para buscar determinaciones en tiempo real
 router.post("/buscar-determinacion", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
+     const usuarioId = user.dataValues.id_Usuario;
   try {
     const { query } = req.body;
 

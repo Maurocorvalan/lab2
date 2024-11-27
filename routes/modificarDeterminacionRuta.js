@@ -7,6 +7,11 @@ const auditoriaController = require("../routes/AuditoriaRuta");
 
 // Ruta para mostrar el formulario de búsqueda y modificación de determinaciones
 router.get("/modificar-determinacion", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
   try {
     const examenes = await Examen.findAll();
     const determinaciones = await Determinacion.findAll();
@@ -21,6 +26,11 @@ router.get("/modificar-determinacion", async (req, res) => {
 
 // Ruta para procesar la búsqueda de determinaciones según el id_examen
 router.post("/buscar-determinacion", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
   try {
     const { codigo, nombre_examen } = req.body;
 
@@ -33,14 +43,7 @@ router.post("/buscar-determinacion", async (req, res) => {
         );
     }
 
-    // Verifica que req.user esté definido y tiene dataValues
-    if (!req.user || !req.user.dataValues) {
-      return res
-        .status(401)
-        .send("Usuario no autenticado o datos de usuario no disponibles.");
-    }
 
-    const usuarioId = req.user.dataValues.id_Usuario;
 
     // Buscar el examen por código o nombre del examen
     let examen;
@@ -81,6 +84,11 @@ router.post("/buscar-determinacion", async (req, res) => {
 
 // Ruta para procesar la modificación del estado de determinaciones
 router.post("/modificar-estado", async (req, res) => {
+     // Verifica la autenticación del usuario
+     const user = req.user;
+     if (!user || !user.dataValues) {
+       return res.status(401).send("Usuario no autenticado.");
+     }
   try {
     const { id_Determinacion, estado } = req.body;
 
