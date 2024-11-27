@@ -16,6 +16,36 @@ const sequelize = require("../config/database");
 router.get("/ordenes", (req, res) => {
   res.render("buscarPacientesOrdenes");
 });
+router.post('/buscar-ordenes', async (req, res) => {
+  const { idPaciente } = req.body;
+
+  console.log('Datos recibidos:', req.body); // Depuración
+
+  if (!idPaciente) {
+    return res.status(400).json({ error: 'ID de paciente no proporcionado.' });
+  }
+
+  try {
+    const ordenes = await OrdenTrabajo.findAll({
+      where: { id_Paciente: idPaciente, estado: { [Op.not]: 'cancelada' } },
+      include: {
+        model: Paciente,
+        attributes: ["nombre", "apellido", "dni", "id_Paciente"],
+      },
+      attributes: ["id_Orden", "Fecha_Creacion", "Fecha_Entrega", "estado", "id_Paciente"],
+    });
+
+    if (ordenes.length === 0) {
+      return res.json({ message: "No se encontraron órdenes para este paciente." });
+    }
+
+    res.json(ordenes);
+  } catch (error) {
+    console.error('Error al buscar órdenes:', error);
+    res.status(500).json({ error: 'Error al buscar órdenes de trabajo.' });
+  }
+});
+
 
 // Ruta para manejar la búsqueda de órdenes de trabajo por DNI del paciente
 router.post("/ordenes", async (req, res) => {
@@ -250,7 +280,29 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
   }
 });
 
+router.get('/buscar-paciente-dinamico', async (req, res) => {
+  const { query } = req.query;
+  
+  try {
+    const pacientes = await Paciente.findAll({
+      where: {
+        [Op.or]: [
+          { nombre: { [Op.like]: `%${query}%` } },
+          { apellido: { [Op.like]: `%${query}%` } },
+          { dni: { [Op.like]: `%${query}%` } },
+          { email: { [Op.like]: `%${query}%` } },
+        ],
+      },
+      attributes: ['id_Paciente', 'nombre', 'apellido', 'dni', 'email'], // Sólo selecciona los campos necesarios
+    });
+    console.log(pacientes)
 
+    res.json(pacientes);
+  } catch (error) {
+    console.error('Error al buscar pacientes:', error);
+    res.status(500).json({ error: 'Error al buscar pacientes' });
+  }
+});
 
 
 // Ruta para cancelar una orden

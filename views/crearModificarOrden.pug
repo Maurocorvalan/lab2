@@ -3,15 +3,57 @@ extends layout
 block content
   head
     title Modificar Orden de Trabajo
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.0/css/bootstrap.min.css")
+    style.
+      .selected-exams-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .selected-exam {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: calc(33.333% - 10px);
+        background-color: #f8f9fa;
+      }
+      .selected-exam span {
+        font-size: 14px;
+        font-weight: 500;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .selected-exam button {
+        font-size: 14px;
+        color: black;
+        background-color: #dc3545;
+        border: none;
+        border-radius: 3px;
+        padding: 3px 7px;
+        cursor: pointer;
+      }
+      .selected-exam button:hover {
+        background-color: #c82333;
+      }
+      .form-check-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
   body
     .container
       h1(class="margin-top-custom") Modificar Orden de Trabajo
 
-      form#modificar-orden-form(action=`/buscarOrdenes/crear-modificar-orden/${orden.id_Orden}` method="POST")
+      form#modificar-orden-form(action=`/crear-modificar-orden/${orden.id_Orden}` method="POST")
         .form-group
           label(for="paciente") Paciente:
-          p Paciente preseleccionado:
           p #{paciente.nombre} #{paciente.apellido} (DNI: #{orden.dni})
           input(type="hidden" name="id_paciente" value=orden.id_Paciente)
           input(type="hidden" name="dni_paciente" value=orden.dni)
@@ -23,31 +65,34 @@ block content
             option(value="analitica", selected=orden.estado === 'analitica') Analítica
             option(value="cancelada", selected=orden.estado === 'cancelada') Cancelada
 
-        // Exámenes existentes y selección de nuevos
         .form-group
           label(for="examenes") Exámenes:
           input#examSearch.form-control(type="text" placeholder="Buscar exámenes...")
           ul#examResults.list-group
           label(for="examenes") Exámenes seleccionados:
-          select#examenesSelect.form-control(name="examenesSelect", multiple)
+          .selected-exams-container#selectedExamsList
             if orden.ordenes_examenes
               each examen in orden.ordenes_examenes
-                option(value=examen.Examen.id_examen selected)= examen.Examen.nombre_examen
+                div.selected-exam(data-id-examen=examen.Examen.id_examen)
+                  span= examen.Examen.nombre_examen
+                  button(type="button") ✖
           input#examenesSelectedIds(name="examenesSelectedIds" type="hidden" value=(orden.ordenes_examenes ? orden.ordenes_examenes.map(e => e.Examen.id_examen).join(',') : ''))
 
-        // Muestras asociadas
         .form-group
           label(for="tiposMuestra") Tipos de Muestra:
           #tiposMuestraContainer
             if orden.Muestras && orden.Muestras.length > 0
               each muestra in orden.Muestras
-                .form-check
-                  input.form-check-input(type="checkbox" name="tipos_muestra" value=muestra.idTipoMuestra checked)
-                  label.form-check-label(for=muestra.idTipoMuestra)= muestra.TipoMuestra.tipoDeMuestra
+                .form-check-container
+                  div.form-check
+                    input.form-check-input(type="checkbox" name="tipos_muestra" value=muestra.idTipoMuestra checked)
+                    label.form-check-label(for=muestra.idTipoMuestra)= muestra.TipoMuestra.tipoDeMuestra
+                  select.form-control(name=`estado_muestra_${muestra.TipoMuestra.tipoDeMuestra}`)
+                    option(value="esperando_toma_muestra", selected=muestra.estado === 'esperando_toma_muestra') Esperando Toma de Muestra
+                    option(value="analitica", selected=muestra.estado === 'analitica') Analítica
             else
               p No se encontraron muestras asociadas.
 
-        // Botones
         .form-group
           button.btn.btn-primary(type="submit" onclick="return confirm('¿Estás seguro de guardar la orden de trabajo?')") Guardar Orden de Trabajo
           button.btn.btn-danger(type="button" data-bs-toggle="modal" data-bs-target="#cancelModal") Cancelar Orden
@@ -63,7 +108,7 @@ block content
               form#cancel-order-form(action=`/buscarOrdenes/cancelar-orden/${orden.id_Orden}` method="POST")
                 .form-group
                   label(for="descripcionCancelacion") Descripción de la Cancelación:
-                  textarea#descripcionCancelacion.form-control(name="descripcionCancelacion" required placeholder="Motivo de la cancelación..."  )
+                  textarea#descripcionCancelacion.form-control(name="descripcionCancelacion" required placeholder="Motivo de la cancelación...")
                 .modal-footer
                   button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cerrar
                   button.btn.btn-danger(type="submit") Confirmar Cancelación
@@ -72,16 +117,15 @@ block content
       const examenes = !{JSON.stringify(examenes)};
       const examSearchInput = document.getElementById("examSearch");
       const examResults = document.getElementById("examResults");
-      const selectedExams = document.getElementById("examenesSelect");
+      const selectedExamsList = document.getElementById("selectedExamsList");
       const examenesSelectedIdsInput = document.getElementById("examenesSelectedIds");
       const tiposMuestraContainer = document.getElementById("tiposMuestraContainer");
 
       // Buscar y seleccionar exámenes
       examSearchInput?.addEventListener("input", () => {
-        const searchTerm = examSearchInput.value.trim().toLowerCase();
-
-        if (!searchTerm) {
-          examResults.innerHTML = ""; // Limpiar si no hay término de búsqueda
+        const searchTerm = examSearchInput.value.toLowerCase();
+        if (searchTerm === "") {
+          examResults.innerHTML = "";
           return;
         }
 
@@ -89,7 +133,7 @@ block content
           examen.nombre_examen.toLowerCase().includes(searchTerm)
         );
 
-        examResults.innerHTML = ""; // Limpiar resultados anteriores
+        examResults.innerHTML = "";
         filteredExams.forEach(examen => {
           const li = document.createElement("li");
           li.className = "list-group-item";
@@ -97,39 +141,39 @@ block content
           li.dataset.idExamen = examen.id_examen;
 
           li.addEventListener("click", () => {
-            if (![...selectedExams.options].some(option => option.value == li.dataset.idExamen)) {
-              const option = document.createElement("option");
-              option.value = li.dataset.idExamen;
-              option.textContent = li.textContent;
-              selectedExams.appendChild(option);
-            }
+            const div = document.createElement("div");
+            div.className = "selected-exam";
+            div.dataset.idExamen = examen.id_examen;
+            div.innerHTML = `
+              <span>${examen.nombre_examen}</span>
+              <button type="button">✖</button>
+            `;
+
+            div.querySelector("button").addEventListener("click", () => {
+              div.remove();
+              updateExamenesSelectedIds();
+              updateTiposMuestra();
+            });
+
+            selectedExamsList.appendChild(div);
             updateExamenesSelectedIds();
-            updateTiposMuestra(); // Actualiza los tipos de muestra según los exámenes seleccionados
-            examResults.innerHTML = ""; // Limpiar después de seleccionar
+            updateTiposMuestra();
+            examResults.innerHTML = "";
           });
 
           examResults.appendChild(li);
         });
       });
 
-      // Doble clic para eliminar exámenes seleccionados
-      selectedExams?.addEventListener("dblclick", (event) => {
-        if (event.target.tagName === "OPTION") {
-          event.target.remove();
-          updateExamenesSelectedIds();
-          updateTiposMuestra(); // Actualiza los tipos de muestra después de eliminar un examen
-        }
-      });
-
       // Actualizar campo oculto de IDs de exámenes seleccionados
       function updateExamenesSelectedIds() {
-        const selectedIds = Array.from(selectedExams.options).map(option => option.value);
+        const selectedIds = Array.from(selectedExamsList.children).map(div => div.dataset.idExamen);
         examenesSelectedIdsInput.value = selectedIds.join(",");
       }
 
-      // Actualizar tipos de muestra según los exámenes seleccionados
+      // Actualizar tipos de muestra según exámenes seleccionados
       function updateTiposMuestra() {
-        const selectedExamIds = Array.from(selectedExams.options).map(option => parseInt(option.value));
+        const selectedExamIds = Array.from(selectedExamsList.children).map(div => parseInt(div.dataset.idExamen));
 
         const tiposMuestraRequeridos = new Set();
         selectedExamIds.forEach(id => {
@@ -141,13 +185,18 @@ block content
 
         tiposMuestraContainer.innerHTML = "";
         tiposMuestraRequeridos.forEach(tipo => {
-          // Verifica si el tipo ya está presente en el contenedor
           if (!document.querySelector(`input[name="tipos_muestra"][value="${tipo}"]`)) {
             const div = document.createElement("div");
-            div.className = "form-check";
+            div.className = "form-check-container";
             div.innerHTML = `
-              <input class="form-check-input" type="checkbox" name="tipos_muestra" value="${tipo}" id="${tipo}" checked>
-              <label class="form-check-label" for="${tipo}">${tipo}</label>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="tipos_muestra" value="${tipo}" id="${tipo}" checked>
+                <label class="form-check-label" for="${tipo}">${tipo}</label>
+              </div>
+              <select class="form-control" name="estado_muestra_${tipo}">
+                <option value="esperando_toma_muestra">Esperando Toma de Muestra</option>
+                <option value="analitica">Analítica</option>
+              </select>
             `;
             tiposMuestraContainer.appendChild(div);
           }

@@ -3,6 +3,9 @@ extends layout
 block content
   head
     title Ingresar Datos del Paciente
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js")
+    link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css")
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js")
 
   body
     .container
@@ -32,11 +35,15 @@ block content
               option(value="femenino", selected=(paciente && paciente.genero.toUpperCase() === "F")) Femenino
               option(value="masculino", selected=(paciente && paciente.genero.toUpperCase() === "M")) Masculino
 
-          .form-group
+          // Campo de embarazo, inicialmente oculto si el género es masculino
+          .form-group#embarazo-group(style="display: none;")
             label(for="embarazo") ¿Embarazo?
             select#embarazo.form-control(name="embarazo", required)
               option(value=0, selected=(paciente && paciente.embarazo === 0)) No
               option(value=1, selected=(paciente && paciente.embarazo === 1)) Sí
+
+          // Input oculto para manejar el valor de embarazo automáticamente si género es masculino
+          input#embarazo-hidden(type="hidden" name="embarazo" value="0")
 
           .form-group
             label(for="direccion") Dirección:
@@ -54,7 +61,95 @@ block content
             label(for="diagnostico") Diagnóstico (presuntivo o confirmado):
             input#diagnostico.form-control(type="text" name="diagnostico", value=`${paciente ? paciente.diagnostico : ''}`)
 
-          button#guardar-btn.btn.btn-primary(type="submit") Guardar Datos
+          button#confirmar-btn.btn.btn-primary(type="button") Confirmar Datos
+
         if paciente
           form#eliminar-form(action=`/eliminar-paciente/${paciente.dni}` method="post")
             button#eliminar-btn.btn.btn-danger(type="submit") Eliminar paciente
+
+      // Modal de confirmación
+      .modal.fade#confirmModal(tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true")
+        .modal-dialog
+          .modal-content
+            .modal-header
+              h5.modal-title#confirmModalLabel Confirmación de Datos
+              button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+            .modal-body
+              p
+                b Nombre: 
+                span#confirm-nombre
+              p
+                b Apellido: 
+                span#confirm-apellido
+              p
+                b DNI: 
+                span#confirm-dni
+              p
+                b Fecha de Nacimiento: 
+                span#confirm-fecha_nacimiento
+              p
+                b Género: 
+                span#confirm-genero
+              p#confirm-embarazo-group
+                b Embarazo: 
+                span#confirm-embarazo
+              p
+                b Dirección: 
+                span#confirm-direccion
+              p
+                b Teléfono: 
+                span#confirm-telefono
+              p
+                b Correo Electrónico: 
+                span#confirm-email
+              p
+                b Diagnóstico: 
+                span#confirm-diagnostico
+            .modal-footer
+              button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Editar
+              button.btn.btn-primary(type="submit" form="guardar-form") Confirmar y Guardar
+
+    script.
+      $(document).ready(function () {
+        const generoSelect = $('#genero');
+        const embarazoGroup = $('#embarazo-group');
+        const embarazoHidden = $('#embarazo-hidden');
+
+        // Función para mostrar/ocultar el campo de embarazo
+        const toggleEmbarazoField = () => {
+          const selectedGenero = generoSelect.val();
+          if (selectedGenero === 'femenino') {
+            embarazoGroup.show();
+            embarazoHidden.prop('disabled', true); // Deshabilita el campo oculto
+          } else {
+            embarazoGroup.hide();
+            embarazoHidden.prop('disabled', false); // Habilita el campo oculto
+          }
+        };
+
+        // Evento para cambiar la visibilidad del campo de embarazo
+        generoSelect.on('change', toggleEmbarazoField);
+
+        // Inicializar el estado correcto en la carga
+        toggleEmbarazoField();
+
+        // Botón de confirmar
+        $('#confirmar-btn').on('click', function () {
+          $('#confirm-nombre').text($('#nombre').val());
+          $('#confirm-apellido').text($('#apellido').val());
+          $('#confirm-dni').text($('#dni').val());
+          $('#confirm-fecha_nacimiento').text($('#fecha_nacimiento').val());
+          $('#confirm-genero').text($('#genero').val());
+          if ($('#genero').val() === 'femenino') {
+            $('#confirm-embarazo-group').show();
+            $('#confirm-embarazo').text($('#embarazo').val() === '1' ? 'Sí' : 'No');
+          } else {
+            $('#confirm-embarazo-group').hide();
+          }
+          $('#confirm-direccion').text($('#direccion').val());
+          $('#confirm-telefono').text($('#telefono').val());
+          $('#confirm-email').text($('#email').val());
+          $('#confirm-diagnostico').text($('#diagnostico').val());
+          $('#confirmModal').modal('show');
+        });
+      });
