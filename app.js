@@ -1,4 +1,8 @@
 const express = require("express");
+const multer = require("multer");
+const { Op } = require("sequelize");
+const crypto = require("crypto");
+const path = require("path");
 const app = express();
 const router = express.Router();
 const bodyParser = require("body-parser");
@@ -21,16 +25,33 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 const LocalStrategy = require("passport-local").Strategy;
 const User = require("./models/User");
-const path = require("path");
-
-// Configuración de la vista
 app.set("view engine", "pug");
 app.set("views", path.join(__dirname, "views"));
-app.use((req, res, next) => {
-  res.locals.query = req.query;
-  next();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "public/uploads")); // Carpeta de destino
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = crypto.randomBytes(16).toString("hex");
+    cb(null, `${uniqueName}${path.extname(file.originalname)}`); // Nombre único con extensión original
+  },
 });
 
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Límite de tamaño: 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const mimeType = allowedTypes.test(file.mimetype);
+    const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimeType && extName) {
+      return cb(null, true);
+    }
+    cb(new Error("Solo se permiten imágenes (jpeg, jpg, png, gif)."));
+  },
+});
 // Middleware para servir archivos estáticos desde la carpeta '/public'
 app.use(
   "/public",
@@ -101,7 +122,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id_Usuario, done) => {
   try {
     const user = await User.findByPk(id_Usuario, {
-      attributes: ["id_Usuario", "correo_electronico", "rol", "nombre_usuario"], // Incluye correo electrónico
+      attributes: ["id_Usuario", "correo_electronico", "rol", "nombre_usuario", "urlFoto"], // Incluye correo electrónico
     });
     if (!user) {
       done(null, false);
@@ -116,7 +137,9 @@ app.use((req, res, next) => {
   res.locals.query = req.query;
   if (req.isAuthenticated()) {
     res.locals.rol = req.user.rol; // Agrega el rol a las vistas
-    res.locals.nombreUsuario = req.user.nombre_usuario; // Nombre del usuario
+    res.locals.nombreUsuario = req.user.nombre_usuario;
+    res.locals.urlFoto = req.user.urlFoto || "/public/img/default-avatar.png"; // Foto del usuario o predeterminada
+    // Nombre del usuario
   }else{
     res.locals.rol = "";
     res.locals.nombreUsuario = ""; // Nombre del usuario
@@ -330,27 +353,25 @@ app.get("/admin/crear-usuario", (req, res) => {
 // Ruta GET para la vista de auditoria
 app.get("/admin/auditoria", async (req, res) => {
   if (req.isAuthenticated() && req.user.rol === "admin") {
-    const { fechaInicio, descripcion, usuario, page = 1 } = req.query;
+    const { descripcion, usuario, fecha, page = 1 } = req.query;
     const limit = 15;
     const offset = (page - 1) * limit;
 
     try {
-      const { auditorias, totalPages } =
-        await auditoriaController.listarAuditorias({
-          fechaInicio,
-          descripcion,
-          usuario,
-          limit,
-          offset,
-        });
+      const filtros = { descripcion, usuario, fecha, limit, offset };
+      const { auditorias, totalPages } = await auditoriaController.listarAuditorias(filtros);
+
+      if (req.xhr || req.headers.accept.includes('json')) {
+        return res.json({ auditorias, totalPages });
+      }
 
       res.render("auditoria", {
         auditorias,
         totalPages,
         currentPage: parseInt(page),
-        fechaInicio,
         descripcion,
         usuario,
+        fecha,
       });
     } catch (error) {
       console.error("Error al obtener auditorías:", error);
@@ -361,133 +382,142 @@ app.get("/admin/auditoria", async (req, res) => {
   }
 });
 
+
+
 // Ruta para la búsqueda dinámica por descripción
-app.get("/admin/auditoria/buscar", async (req, res) => {
-  if (req.isAuthenticated() && req.user.rol === "admin") {
-    const { descripcion } = req.query;
-    try {
-      // Si la descripción está vacía, retorna todas las auditorías
-      if (!descripcion || descripcion.trim() === "") {
-        const auditorias = await auditoriaController.listarAuditorias({
-          limit: 1000,
-          offset: 0,
-        }); // Ajusta el límite según tus necesidades
-        return res.json(auditorias.auditorias); // No incluye la paginación
-      }
+// app.get("/admin/auditoria/buscar", async (req, res) => {
+//   if (req.isAuthenticated() && req.user.rol === "admin") {
+//     const { descripcion } = req.query;
+//     try {
+//       // Si la descripción está vacía, retorna todas las auditorías
+//       if (!descripcion || descripcion.trim() === "") {
+//         const auditorias = await auditoriaController.listarAuditorias({
+//           limit: 1000,
+//           offset: 0,
+//         }); // Ajusta el límite según tus necesidades
+//         return res.json(auditorias.auditorias); // No incluye la paginación
+//       }
 
-      // Busca auditorías por descripción
-      const auditorias = await auditoriaController.buscarPorDescripcion(
-        descripcion
-      );
-      res.json(auditorias);
-    } catch (error) {
-      res.status(500).send("Error al obtener auditorías");
-    }
-  } else {
-    res.status(403).send("Acceso no autorizado");
-  }
-});
+//       // Busca auditorías por descripción
+//       const auditorias = await auditoriaController.buscarPorDescripcion(
+//         descripcion
+//       );
+//       res.json(auditorias);
+//     } catch (error) {
+//       res.status(500).send("Error al obtener auditorías");
+//     }
+//   } else {
+//     res.status(403).send("Acceso no autorizado");
+//   }
+// });
 // Ruta GET para la vista de actualización de usuario para administrador
-app.get("/admin/actualizarUsuarioAdm", (req, res) => {
-  if (req.isAuthenticated() && req.user.rol === "admin") {
-    res.render("actualizarUsuarioAdm");
-  } else {
-    res.status(403).send("Acceso no autorizado");
-  }
-});
+app.get("/admin/actualizarUsuarioAdm", async (req, res) => {
 
-// Ruta GET para buscar un usuario por nombre para administrador
-app.get("/admin/actualizarUsuarioAdm/:nombre", async (req, res) => {
   if (req.isAuthenticated() && req.user.rol === "admin") {
+    const { nombre } = req.query;
+
     try {
-      const nombreBusqueda = req.params.nombre;
-      const usuario = await User.findOne({
-        where: { nombre_usuario: nombreBusqueda },
-      });
+      if (nombre) {
+        // Si el parámetro `nombre` está presente, realiza la búsqueda
+        const usuarios = await User.findAll({
+          where: {
+            [Op.or]: [
+              { nombre_usuario: { [Op.like]: `%${nombre}%` } },
+              { correo_electronico: { [Op.like]: `%${nombre}%` } },
+            ],
+          },
+          attributes: ["id_Usuario", "nombre_usuario", "correo_electronico", "rol", "urlFoto"], // Incluye la URL de la foto
+        });
 
-      if (usuario) {
-        // Encontró al usuario, envía la respuesta JSON
-        res.json({ usuario });
-      } else {
-        // Usuario no encontrado, envía un mensaje como respuesta JSON
-        res.json({ mensaje: "Usuario no encontrado" });
+        return res.json({ usuarios }); // Devuelve los resultados como JSON
       }
+
+      // Si no hay parámetro `nombre`, renderiza la vista
+      res.render("actualizarUsuarioAdm");
     } catch (error) {
-      console.error("Error en la búsqueda:", error);
-      res.status(500).json({ error: "Error en la búsqueda" });
+      console.error("Error al manejar la solicitud:", error);
+
+      // Devuelve un error JSON si se estaba buscando o renderiza un error si es la vista
+      if (nombre) {
+        return res.status(500).json({ error: "Error en la búsqueda" });
+      }
+      res.status(500).send("Error al renderizar la página");
     }
   } else {
     res.status(403).send("Acceso no autorizado");
   }
 });
+
 
 // Ruta POST para actualizar un usuario por administrador
-app.post("/admin/actualizar-usuario", async (req, res) => {
+app.post("/admin/actualizar-usuario", upload.single("foto"), async (req, res) => {
   try {
-    // Obtén los datos del formulario enviado por el cliente
-    const nombreBusqueda = req.body.nombreBusqueda;
-    const nombre = req.body.nombre;
-    const correoElectronico = req.body.correo_electronico;
-    const password = req.body.password; // Contraseña sin cifrar
-    const rol = req.body.rol;
-    const usuarioExistente = await User.findOne({
-      where: { nombre_usuario: nombreBusqueda },
-    });
+    const { idUsuario, nombre, correo_electronico, password, rol } = req.body;
+    const foto = req.file;
 
-    if (usuarioExistente) {
-      // Actualiza los datos del usuario existente
-      usuarioExistente.nombre_usuario = nombre;
-      usuarioExistente.correo_electronico = correoElectronico;
-
-      // Cifra la nueva contraseña si se proporcionó
-      if (password) {
-        const hashedPassword = bcrypt.hashSync(password, 10);
-        usuarioExistente.password = hashedPassword;
-      }
-
-      usuarioExistente.rol = rol;
-
-      await usuarioExistente.save();
-
-      res.render("actualizarUsuarioAdm", {
-        mensaje: `Usuario ${nombre} actualizado exitosamente`,
+    // Verifica que el ID del usuario esté presente
+    if (!idUsuario) {
+      return res.render("actualizarUsuarioAdm", {
+        mensajeError: "No se pudo actualizar el usuario. ID no proporcionado.",
       });
-    } else {
-      res.render("actualizarUsuarioAdm", { mensaje: "Usuario no encontrado" });
     }
+
+    // Busca el usuario por ID
+    const usuarioExistente = await User.findByPk(idUsuario);
+    if (!usuarioExistente) {
+      return res.render("actualizarUsuarioAdm", { mensajeError: "Usuario no encontrado." });
+    }
+
+    // Actualiza los datos del usuario
+    usuarioExistente.nombre_usuario = nombre;
+    usuarioExistente.correo_electronico = correo_electronico;
+    if (password) usuarioExistente.password = bcrypt.hashSync(password, 10);
+    usuarioExistente.rol = rol;
+
+    // Maneja la foto
+    if (foto) {
+      usuarioExistente.urlFoto = `/public/uploads/${foto.filename}`;
+    }
+
+    await usuarioExistente.save();
+
+    res.render("actualizarUsuarioAdm", {
+      mensajeExito: `Usuario ${nombre} actualizado exitosamente.`,
+    });
   } catch (error) {
-    console.error("Error en el servidor: " + error);
-    res.status(500).send("Error en el servidor");
+    console.error("Error al actualizar usuario:", error);
+    res.render("actualizarUsuarioAdm", {
+      mensajeError: "Ocurrió un error al actualizar el usuario.",
+    });
   }
 });
 
+
 // Ruta DELETE para eliminar un usuario por administrador
-app.delete("/admin/eliminarUsuarioAdm/:nombre", async (req, res) => {
-  const nombreUsuario = req.params.nombre;
+app.delete("/admin/eliminarUsuarioAdm/:id", async (req, res) => {
+  const idUsuario = req.params.id;
 
   try {
-    const usuario = await User.findOne({
-      where: { nombre_usuario: nombreUsuario },
-    });
+    const usuario = await User.findByPk(idUsuario);
 
-    if (usuario) {
-      // Elimina el usuario de la base de datos
-      await usuario.destroy();
-      res.status(200).json({ mensaje: "Usuario eliminado exitosamente" });
-    } else {
-      res.status(404).json({ mensaje: "Usuario no encontrado" });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
+
+    await usuario.destroy();
+    res.status(200).json({ mensaje: "Usuario eliminado exitosamente" });
   } catch (error) {
-    console.error("Error en el servidor: " + error);
+    console.error("Error en el servidor: ", error);
     res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
 // Ruta POST para crear un usuario por administrador
-app.post("/admin/crear-usuario", async (req, res) => {
+app.post("/admin/crear-usuario", upload.single("foto"), async (req, res) => {
   if (req.isAuthenticated() && req.user.rol === "admin") {
     const { nombre, correo_electronico, password, rol } = req.body;
-
+    const foto =req.file;
+    const urlFoto = foto ? `/public/uploads/${foto.filename}` : null;
     try {
       const existingUser = await User.findOne({
         where: { correo_electronico },
@@ -506,6 +536,8 @@ app.post("/admin/crear-usuario", async (req, res) => {
           correo_electronico,
           password: hashedPassword,
           rol,
+          urlFoto,
+
         });
         // Establece el mensaje y redirige a la misma página para mostrarlo
         res.render("crear-usuario", {

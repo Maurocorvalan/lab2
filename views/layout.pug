@@ -48,6 +48,24 @@ html
       .sidebar.active {
         transform: translateX(0);
       }
+      .user-info {
+        text-align: center;
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .user-info img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 10px;
+        border: 2px solid #adb5bd;
+      }
+      .user-info h4 {
+        color: #f8f9fa;
+        font-size: 1.2rem;
+        margin: 0;
+      }
       .sidebar h4 {
         padding: 15px 20px;
         margin: 0;
@@ -117,29 +135,39 @@ html
 
     //- Sidebar (menú lateral)
     .sidebar
-      a(href="http://localhost:3000" class="d-block text-center text-white text-decoration-none fw-bold fs-4 mt-3 mb-4") Laboratorio
+      .user-info
+        if urlFoto
+          img(src=urlFoto alt="Foto de usuario")
+        else
+          img(src="/public/img/default-avatar.png" alt="Foto predeterminada")
+        h4 #{nombreUsuario}
       nav
-        if rol === "recepcionista" || rol === "tecnico" || rol === "bioquimico"
+        if rol === "recepcionista" || rol === "tecnico" || rol === "bioquimico"||  rol === "admin"
           h4 Pacientes
           a(href="/buscar-paciente") Registrar/Buscar Paciente
-        if rol === "recepcionista" || rol === "tecnico" || rol === "bioquimico"
+        if rol === "recepcionista" || rol === "tecnico" || rol === "bioquimico" ||  rol === "admin"
           h4 Órdenes
           a(href="/orden/generacion-orden") Generar Orden
           a(href="/BuscarOrdenes/ordenes") Actualizar Orden
-        if rol === "bioquimico" || rol === "tecnico"
+        if rol === "bioquimico" || rol === "tecnico" ||  rol === "admin"
           a(href="/ordenesInformadas") Ver Órdenes Informadas
-        if rol === "bioquimico"
+        if rol === "bioquimico"||  rol === "admin"
           a(href="/pendientesAValidar") Pendientes a Validar
-        if rol === "bioquimico"
+        if rol === "bioquimico" ||  rol === "admin"
           a(href="/ordenesAnalitica") Analizar Órdenes Pendientes
-        if rol === "bioquimico" || rol === "tecnico"
+        if rol === "bioquimico" || rol === "tecnico" ||  rol === "admin"
           h4 Exámenes
           a(href="/examen/crear-examen") Generar Examen
           a(href="/modificar-examen/buscar-modificar-examen") Actualizar Examen
-        if rol === "bioquimico" || rol === "tecnico"
+        if rol === "bioquimico" || rol === "tecnico" || rol === "admin"
           h4 Valores de Referencia
           a(href="/valoresreferencia/crear-valores") Generar Valor de Referencia
           a(href="/buscar-valores/buscar-valores-referencia") Actualizar Valor de Referencia
+        if rol === "admin" 
+          h4 Administrar
+          a(href="/admin/crear-usuario" ) Crear Usuario
+          a(href="/admin/actualizarUsuarioAdm" ) Actualizar Usuario    
+          a(href="/admin/auditoria") Auditoria   
         hr
         a(href="/cambiarContrasena") Cambiar Contraseña
         a(href="/logout" onclick="return confirm('¿Estás seguro de cerrar sesión?')") Cerrar Sesión

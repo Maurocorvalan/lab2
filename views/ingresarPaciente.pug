@@ -40,7 +40,7 @@ block content
 
           .form-group
             label(for="direccion") Dirección:
-            input#direccion.form-control(type="text" name="direccion", value=`${paciente && paciente.direccion }`)
+            input#direccion.form-control(type="text" name="direccion", value=`${paciente ? paciente.direccion : '' }`)
 
           .form-group
             label(for="telefono") Teléfono:

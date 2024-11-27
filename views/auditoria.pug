@@ -7,19 +7,18 @@ block content
   div.container.margin-top-custom
     h1 Auditorías
 
-    //- Filtro por fecha
-    form#filterForm(action="/admin/auditoria" method="get")
+    //- Filtro por búsqueda
+    .form-group
+      label(for="descripcion") Buscar por descripción
+      input#descripcion.form-control(type="text", placeholder="Escribe una descripción...")
 
+    .form-group
+      label(for="usuario") Filtrar por usuario
+      input#usuario.form-control(type="text", placeholder="Escribe el nombre o email del usuario...")
 
-      .form-group
-        label(for="descripcion") Buscar por descripción
-        input#descripcion.form-control(type="text", name="descripcion", value=(descripcion || ''), placeholder="Escribe una descripción...")
-
-      .form-group
-        label(for="usuario") Filtrar por usuario
-        input#usuario.form-control(type="text", name="usuario", value=(usuario || ''), placeholder="Escribe el nombre o email del usuario...")
-
-      button.btn.btn-primary(type="submit") Filtrar
+    .form-group
+      label(for="fecha") Filtrar por fecha
+      input#fecha.form-control(type="date")
 
     //- Tabla para mostrar las auditorías
     table.table.table-striped
@@ -30,38 +29,13 @@ block content
           th Correo Electrónico
           th Operación
           th Detalles
-      tbody
-        each auditoria in auditorias
-          tr
-            td= auditoria.Fecha_Hora_Operacion.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
-            td= auditoria.Usuario ? auditoria.Usuario.nombre_usuario : 'Desconocido'
-            td= auditoria.Usuario ? auditoria.Usuario.correo_electronico : 'Desconocido'
-            td= auditoria.Operacion_Realizada
-            td= auditoria.Detalles_Adicionales || 'No disponible'
+      tbody#tabla-auditorias
+        //- Las filas se llenan dinámicamente con JavaScript
 
     //- Paginación
-    if totalPages > 1
-      nav
-        ul.pagination
-          if currentPage > 1
-            li.page-item
-              a.page-link(href=`/admin/auditoria?page=${currentPage - 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}&usuario=${usuario}`) « Anterior
-          else
-            li.page-item.disabled
-              span.page-link « Anterior
-          each page in Array(totalPages).fill().map((_, i) => i + 1)
-            if page === currentPage
-              li.page-item.active
-                span.page-link= page
-            else
-              li.page-item
-                a.page-link(href=`/admin/auditoria?page=${page}&fechaInicio=${fechaInicio}&descripcion=${descripcion}&usuario=${usuario}`)= page
-          if currentPage < totalPages
-            li.page-item
-              a.page-link(href=`/admin/auditoria?page=${currentPage + 1}&fechaInicio=${fechaInicio}&descripcion=${descripcion}&usuario=${usuario}`) Siguiente »
-          else
-            li.page-item.disabled
-              span.page-link Siguiente »
+    nav#paginacion
+      ul.pagination
+        //- Las páginas se llenan dinámicamente con JavaScript
 
     //- Mensaje para errores o advertencias
     div#mensaje
@@ -69,41 +43,83 @@ block content
     //- Incluye la librería Axios
     script(src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js")
 
-    //- Script para la búsqueda dinámica de descripción
+    //- Script para búsqueda y paginación dinámica
     script.
       document.addEventListener('DOMContentLoaded', function() {
         const descripcionInput = document.getElementById('descripcion');
-        descripcionInput.addEventListener('input', async function() {
-          const descripcion = descripcionInput.value.trim();
-          try {
-            // Llama a la ruta sin la descripción si el campo está vacío
-            const response = await axios.get('/admin/auditoria/buscar', {
-              params: { descripcion: descripcion === '' ? undefined : descripcion }
-            });
-            const auditorias = response.data;
-            const tbody = document.querySelector('tbody');
-            tbody.innerHTML = '';
+        const usuarioInput = document.getElementById('usuario');
+        const fechaInput = document.getElementById('fecha');
+        const tablaAuditorias = document.getElementById('tabla-auditorias');
+        const paginacion = document.getElementById('paginacion');
+        const mensaje = document.getElementById('mensaje');
 
-            if (auditorias && Array.isArray(auditorias)) {
-              auditorias.forEach(auditoria => {
-                const row = `
-                  <tr>
-                    <td>${new Date(auditoria.Fecha_Hora_Operacion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</td>
-                    <td>${auditoria.Usuario ? auditoria.Usuario.Nombre_Usuario : 'Desconocido'}</td>
-                    <td>${auditoria.Usuario ? auditoria.Usuario.correo_electronico : 'Desconocido'}</td>
-                    <td>${auditoria.Operacion_Realizada}</td>
-                    <td>${auditoria.Detalles_Adicionales || 'No disponible'}</td>
-                  </tr>
-                `;
-                tbody.innerHTML += row;
-              });
-              document.getElementById('mensaje').innerHTML = ''; // Limpiar mensaje
-            } else {
-              document.getElementById('mensaje').innerHTML = 'No se encontraron resultados.';
+        let currentPage = 1;
+
+        const fetchAuditorias = async () => {
+          try {
+            const descripcion = descripcionInput.value.trim();
+            const usuario = usuarioInput.value.trim();
+            const fecha = fechaInput.value;
+
+            const response = await axios.get('/admin/auditoria', {
+              params: { descripcion, usuario, fecha, page: currentPage }
+            });
+
+            const { auditorias, totalPages } = response.data;
+
+            // Actualiza la tabla
+            tablaAuditorias.innerHTML = auditorias.map(auditoria => `
+              <tr>
+                <td>${new Date(auditoria.Fecha_Hora_Operacion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                <td>${auditoria.Usuario ? auditoria.Usuario.nombre_usuario : 'Desconocido'}</td>
+                <td>${auditoria.Usuario ? auditoria.Usuario.correo_electronico : 'Desconocido'}</td>
+                <td>${auditoria.Operacion_Realizada}</td>
+                <td>${auditoria.Detalles_Adicionales || 'No disponible'}</td>
+              </tr>
+            `).join('');
+
+            // Actualiza la paginación
+            paginacion.innerHTML = '';
+            if (totalPages > 1) {
+              const ul = document.createElement('ul');
+              ul.className = 'pagination';
+
+              for (let page = 1; page <= totalPages; page++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${page === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#">${page}</a>`;
+                li.addEventListener('click', () => {
+                  currentPage = page;
+                  fetchAuditorias();
+                });
+                ul.appendChild(li);
+              }
+
+              paginacion.appendChild(ul);
             }
+
+            mensaje.innerHTML = ''; // Limpia los mensajes
           } catch (error) {
-            error("Error al filtrar auditorías", error);
-            document.getElementById('mensaje').innerHTML = 'Ocurrió un error al buscar las auditorías.';
+            mensaje.innerHTML = 'Ocurrió un error al buscar las auditorías.';
           }
+        };
+
+        // Listeners para búsqueda en tiempo real
+        descripcionInput.addEventListener('input', () => {
+          currentPage = 1; // Reinicia la paginación al buscar
+          fetchAuditorias();
         });
+
+        usuarioInput.addEventListener('input', () => {
+          currentPage = 1; // Reinicia la paginación al buscar
+          fetchAuditorias();
+        });
+
+        fechaInput.addEventListener('change', () => {
+          currentPage = 1; // Reinicia la paginación al buscar
+          fetchAuditorias();
+        });
+
+        // Carga inicial
+        fetchAuditorias();
       });
