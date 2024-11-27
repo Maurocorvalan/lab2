@@ -4,6 +4,7 @@ const Paciente = require("../models/paciente");
 const Usuarios = require("../models/User");
 const bcrypt = require("bcrypt");
 const auditoriaController = require("../routes/AuditoriaRuta");
+const { Op } = require("sequelize");
 
 router.get("/ingresar-paciente", (req, res) => {
   res.render("ingresarPaciente", { paciente: null, mensaje: null }); // Renderiza el formulario de ingreso de pacientes
@@ -11,6 +12,31 @@ router.get("/ingresar-paciente", (req, res) => {
 router.get("/buscar-paciente", (req, res) => {
   res.render("busquedaPaciente");
 });
+router.get('/buscar-paciente-dinamico', async (req, res) => {
+  const { query } = req.query;
+
+  try {
+    // Busca pacientes por nombre, apellido, DNI, o email
+    const pacientes = await Paciente.findAll({
+      where: {
+        [Op.or]: [
+          { nombre: { [Op.like]: `%${query}%` } },
+          { apellido: { [Op.like]: `%${query}%` } },
+          { dni: { [Op.like]: `%${query}%` } },
+          { email: { [Op.like]: `%${query}%` } },
+          { telefono: { [Op.like]: `%${query}%` } },
+        ],
+      },
+      attributes: ['id_paciente', 'nombre', 'apellido', 'dni', 'email', 'telefono'], // Sólo selecciona los campos necesarios
+    });
+
+    res.json(pacientes);
+  } catch (error) {
+    console.error('Error al buscar pacientes:', error);
+    res.status(500).json({ error: 'Error al buscar pacientes' });
+  }
+});
+
 router.post("/buscar-paciente", async (req, res) => {
   const searchType = req.body.searchType;
   const searchTerm = req.body.searchTerm;
