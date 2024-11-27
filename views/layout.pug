@@ -161,14 +161,14 @@ html
           a(href="/modificar-examen/buscar-modificar-examen") Actualizar Examen
         if rol === "bioquimico" || rol === "tecnico" || rol === "admin"
           h4 Valores de Referencia
-          a(href="/valoresreferencia/crear-valores") Generar Valor de Referencia
-          a(href="/buscar-valores/buscar-valores-referencia") Actualizar Valor de Referencia
+          a(href="/valoresreferencia/crear-valores") Valores de Referencia
         if rol === "admin" 
           h4 Administrar
           a(href="/admin/crear-usuario" ) Crear Usuario
           a(href="/admin/actualizarUsuarioAdm" ) Actualizar Usuario    
           a(href="/admin/auditoria") Auditoria   
         hr
+        h4 Configuracion
         a(href="/cambiarContrasena") Cambiar Contraseña
         a(href="/logout" onclick="return confirm('¿Estás seguro de cerrar sesión?')") Cerrar Sesión
 

@@ -155,6 +155,7 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
     const {
       estado,
       examenesSelectedIds,
+      examenesRemovedIds, // IDs de exámenes eliminados
       id_paciente,
       dni_paciente,
       tipos_muestra, // Este campo debe ser un array
@@ -177,6 +178,9 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
     }
 
     const examenesSelectedIdsArray = examenesSelectedIds.split(",").map(Number).filter(Boolean);
+    const examenesRemovedIdsArray = examenesRemovedIds
+      ? examenesRemovedIds.split(",").map(Number).filter(Boolean)
+      : [];
 
     // Buscar la orden existente
     const orden = await OrdenTrabajo.findByPk(req.params.idOrden);
@@ -191,6 +195,48 @@ router.post("/crear-modificar-orden/:idOrden", async (req, res) => {
       where: { id_examen: examenesSelectedIdsArray },
     }));
     await orden.save();
+
+    // Manejar eliminación de exámenes y sus muestras asociadas
+    if (examenesRemovedIdsArray.length > 0) {
+      for (const examenId of examenesRemovedIdsArray) {
+        // Eliminar el examen de la relación OrdenesExamenes
+        await OrdenesExamenes.destroy({
+          where: { id_Orden: orden.id_Orden, id_examen: examenId },
+        });
+
+        // Verificar si la muestra asociada ya no es necesaria
+        const examen = await Examen.findByPk(examenId, {
+          include: { model: TiposMuestra, as: "tipoMuestra" },
+        });
+
+        if (examen && examen.tipoMuestra) {
+          const tipoDeMuestra = examen.tipoMuestra.tipoDeMuestra;
+
+          // Contar si quedan exámenes asociados a esta muestra
+          const remainingExams = await OrdenesExamenes.count({
+            where: { id_Orden: orden.id_Orden },
+            include: [
+              {
+                model: Examen,
+                as: "Examen", // Alias correcto para Examen
+                include: {
+                  model: TiposMuestra,
+                  as: "tipoMuestra", // Alias correcto para TiposMuestra
+                  where: { tipoDeMuestra },
+                },
+              },
+            ],
+          });
+          
+          if (remainingExams === 0) {
+            // Eliminar la muestra si ya no es necesaria
+            await Muestra.destroy({
+              where: { id_Orden: orden.id_Orden, idTipoMuestra: examen.tipoMuestra.idTipoMuestra },
+            });
+          }
+        }
+      }
+    }
 
     // Actualizar o crear exámenes asociados
     for (const examenId of examenesSelectedIdsArray) {

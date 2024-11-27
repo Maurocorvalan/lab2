@@ -44,12 +44,7 @@ router.post("/buscar-valores-referencia", async (req, res) => {
       where: { id_Determinacion: id_Determinacion },
     });
 
-    // Registro de auditoría
-    await auditoriaController.registrar(
-      usuarioId, // usuarioId
-      "Búsqueda de Valores de Referencia", // operación
-      `Búsqueda de valores de referencia para la determinación con ID: ${id_Determinacion}` // detalles
-    );
+
 
     // Renderiza la misma página con la información de los valores de referencia encontrados o un mensaje si no se encuentran
     res.render("buscarModificarValref", {
