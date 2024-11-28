@@ -83,7 +83,6 @@ router.post("/crear-determinacion/determinaciones", async (req, res) => {
       });
 
       nuevasDeterminaciones.push(nuevaDeterminacion);
-      console.log(nuevasDeterminaciones)
     }
 
     res.status(201).json({
