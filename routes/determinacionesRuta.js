@@ -41,6 +41,7 @@ router.get("/crear-determinacion", async (req, res) => {
 router.post("/crear-determinacion/determinaciones", async (req, res) => {
   try {
     const { id_examen, determinaciones } = req.body;
+    const usuarioId = req.user.dataValues.id_Usuario;
     // Validar que el examen existe
     const examen = await Examen.findByPk(id_examen);
     if (!examen) {
@@ -68,6 +69,11 @@ router.post("/crear-determinacion/determinaciones", async (req, res) => {
             estado: det.estado === 1 || det.estado === "activo" ? 1 : 0,
           });
           actualizadasDeterminaciones.push(determinacionExistente);
+          await auditoriaController.registrar(
+            usuarioId,
+            "Actualizar Determinación",
+            `Determinación actualizada: ${determinacionExistente.Nombre_Determinacion}`
+          );
           continue;
         }
       }
@@ -83,6 +89,11 @@ router.post("/crear-determinacion/determinaciones", async (req, res) => {
       });
 
       nuevasDeterminaciones.push(nuevaDeterminacion);
+      await auditoriaController.registrar(
+        usuarioId,
+        "Crear Determinación",
+        `Nueva determinación creada: ${nuevaDeterminacion.Nombre_Determinacion}`
+      );
     }
 
     res.status(201).json({
@@ -100,14 +111,18 @@ router.post("/crear-determinacion/determinaciones", async (req, res) => {
 router.delete("/:idDeterminacion", async (req, res) => {
   try {
     const { idDeterminacion } = req.params;
-
+    const usuarioId = req.user.dataValues.id_Usuario;
     const determinacion = await Determinacion.findByPk(idDeterminacion);
     if (!determinacion) {
       return res.status(404).json({ error: "Determinación no encontrada." });
     }
 
     await determinacion.destroy();
-
+    await auditoriaController.registrar(
+      usuarioId,
+      "Eliminar Determinación",
+      `Determinación eliminada: ${determinacion}`
+    );
     res.status(200).json({ message: "Determinación eliminada con éxito." });
   } catch (error) {
     console.error("Error al eliminar la determinación:", error);

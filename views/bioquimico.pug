@@ -14,7 +14,6 @@ block content
           return;
         }
 
-        console.log("Chart.js cargado con éxito");
 
         const chartData = [
           {
@@ -84,7 +83,6 @@ block content
                 scales: { x: { display: false }, y: { display: false } },
               },
             });
-            console.log(`Gráfico renderizado: ${chart.canvasId}`);
           } else {
             console.error(`Canvas no encontrado: ${chart.canvasId}`);
           }

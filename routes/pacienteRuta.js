@@ -7,30 +7,30 @@ const auditoriaController = require("../routes/AuditoriaRuta");
 const { Op } = require("sequelize");
 
 router.get("/ingresar-paciente", (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   res.render("ingresarPaciente", { paciente: null, mensaje: null }); // Renderiza el formulario de ingreso de pacientes
 });
 router.get("/buscar-paciente", (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   res.render("busquedaPaciente");
 });
-router.get('/buscar-paciente-dinamico', async (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+router.get("/buscar-paciente-dinamico", async (req, res) => {
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   const { query } = req.query;
 
   try {
@@ -45,23 +45,30 @@ router.get('/buscar-paciente-dinamico', async (req, res) => {
           { telefono: { [Op.like]: `%${query}%` } },
         ],
       },
-      attributes: ['id_paciente', 'nombre', 'apellido', 'dni', 'email', 'telefono'], // Sólo selecciona los campos necesarios
+      attributes: [
+        "id_paciente",
+        "nombre",
+        "apellido",
+        "dni",
+        "email",
+        "telefono",
+      ], // Sólo selecciona los campos necesarios
     });
 
     res.json(pacientes);
   } catch (error) {
-    console.error('Error al buscar pacientes:', error);
-    res.status(500).json({ error: 'Error al buscar pacientes' });
+    console.error("Error al buscar pacientes:", error);
+    res.status(500).json({ error: "Error al buscar pacientes" });
   }
 });
 
 router.post("/buscar-paciente", async (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   const searchType = req.body.searchType;
   const searchTerm = req.body.searchTerm;
 
@@ -113,12 +120,12 @@ router.post("/buscar-paciente", async (req, res) => {
 
 // Controlador para seleccionar un paciente de la lista
 router.get("/editar-paciente/:id", async (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   const { id } = req.params;
   const { searchTerm, searchType } = req.query;
 
@@ -128,9 +135,6 @@ router.get("/editar-paciente/:id", async (req, res) => {
     if (paciente) {
       // Configura la variable fechaNacimiento
       const fechaNacimiento = paciente.fecha_nacimiento;
-
-      // Agrega la línea de registro
-      console.log("Fecha de nacimiento:", fechaNacimiento);
 
       // Renderiza el formulario con los campos llenos, pasando el valor de "fechaNacimiento"
       res.render("ingresarPaciente", {
@@ -148,12 +152,12 @@ router.get("/editar-paciente/:id", async (req, res) => {
 // Ruta para procesar la creación o actualización de pacientes
 
 router.post("/guardar-paciente", async (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   try {
     const {
       dni,
@@ -206,7 +210,7 @@ router.post("/guardar-paciente", async (req, res) => {
           correo_electronico: email,
         });
         console.log("Usuario actualizado con éxito:", email);
-      }else {
+      } else {
         // Crear un usuario asociado al paciente
         const hashedPassword = await bcrypt.hash(dni, 10); // Hashea el DNI como contraseña por defecto
         await Usuarios.create({
@@ -221,7 +225,7 @@ router.post("/guardar-paciente", async (req, res) => {
       await auditoriaController.registrar(
         usuarioId,
         "Actualización de Paciente",
-        `Actualización de datos del paciente con DNI: ${dni}`
+        `Actualización de datos del paciente: ${nombre} ${apellido} DNI: ${dni}`
       );
       req.flash("success", `Paciente con DNI ${dni} actualizado con éxito.`);
     } else {
@@ -255,12 +259,14 @@ router.post("/guardar-paciente", async (req, res) => {
       await auditoriaController.registrar(
         usuarioId,
         "Creación de Paciente",
-        `Creación de un nuevo paciente con DNI: ${dni}`
+        `Creación de un nuevo  paciente: ${nombre} ${apellido} DNI: ${dni}`
       );
     }
 
     // Redirigir con el mensaje de éxito
-    res.redirect(`/tecnico?success=El paciente se generó o actualizó con éxito.`);
+    res.redirect(
+      `/tecnico?success=El paciente se generó o actualizó con éxito.`
+    );
   } catch (error) {
     console.error("Error al guardar el paciente o usuario:", error);
     res
@@ -269,15 +275,14 @@ router.post("/guardar-paciente", async (req, res) => {
   }
 });
 
-
 // Eliminar paciente y usuario por DNI
 router.post("/eliminar-paciente/:dni", async (req, res) => {
-     // Verifica la autenticación del usuario
-     const user = req.user;
-     if (!user || !user.dataValues) {
-       return res.status(401).send("Usuario no autenticado.");
-     }
-     const usuarioId = user.dataValues.id_Usuario;
+  // Verifica la autenticación del usuario
+  const user = req.user;
+  if (!user || !user.dataValues) {
+    return res.status(401).send("Usuario no autenticado.");
+  }
+  const usuarioId = user.dataValues.id_Usuario;
   const { dni } = req.params;
 
   try {
@@ -296,6 +301,11 @@ router.post("/eliminar-paciente/:dni", async (req, res) => {
     // Eliminar el paciente
     await paciente.destroy();
     console.log(`Paciente con DNI ${dni} eliminado.`);
+    await auditoriaController.registrar(
+      usuarioId,
+      "Eliminar Paciente",
+      `El usuario eliminó al paciente con DNI ${dni} (${paciente.nombre} ${paciente.apellido}).`
+    );
 
     // Eliminar el usuario asociado si existe
     if (usuario) {

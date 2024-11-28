@@ -137,112 +137,121 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
 });
 
 // Ruta para procesar la generación de ordenrouter.post("/generacion-orden", async (req, res) => {
-  router.post("/generacion-orden", async (req, res) => {
-    try {
-      const {
-        estado,
-        examenesSelectedIds,
-        id_paciente,
-        dni_paciente,
-        tipos_muestra, // Este es un array con los tipos de muestra seleccionados
-        ...rest
-      } = req.body;
-  
-      const user = req.user;
-  
-      console.log("Datos recibidos:", req.body);
-  
-      // Verificar autenticación
-      if (!user || !user.dataValues) {
-        return res.status(401).send("Usuario no autenticado.");
-      }
-      const usuarioId = user.dataValues.id_Usuario;
-  
-      // Validar datos obligatorios
-      if (!id_paciente || !dni_paciente || !estado || !examenesSelectedIds) {
-        return res.status(400).send("Todos los campos requeridos deben ser completados.");
-      }
-  
-      const examenesSelectedIdsArray = examenesSelectedIds
-        .split(",")
-        .map((id) => parseInt(id))
-        .filter(Boolean);
-  
-      if (examenesSelectedIdsArray.length === 0) {
-        return res.status(400).send("Debe seleccionar al menos un examen válido.");
-      }
-  
-      // Calcular fecha de entrega
-      const tiempoMaximoDemora = await Examen.max("tiempoDemora", {
-        where: { id_examen: examenesSelectedIdsArray },
+router.post("/generacion-orden", async (req, res) => {
+  try {
+    const {
+      estado,
+      examenesSelectedIds,
+      id_paciente,
+      dni_paciente,
+      tipos_muestra, // Este es un array con los tipos de muestra seleccionados
+      ...rest
+    } = req.body;
+
+    const user = req.user;
+
+    console.log("Datos recibidos:", req.body);
+
+    // Verificar autenticación
+    if (!user || !user.dataValues) {
+      return res.status(401).send("Usuario no autenticado.");
+    }
+    const usuarioId = user.dataValues.id_Usuario;
+
+    // Validar datos obligatorios
+    if (!id_paciente || !dni_paciente || !estado || !examenesSelectedIds) {
+      return res
+        .status(400)
+        .send("Todos los campos requeridos deben ser completados.");
+    }
+
+    const examenesSelectedIdsArray = examenesSelectedIds
+      .split(",")
+      .map((id) => parseInt(id))
+      .filter(Boolean);
+
+    if (examenesSelectedIdsArray.length === 0) {
+      return res
+        .status(400)
+        .send("Debe seleccionar al menos un examen válido.");
+    }
+
+    // Calcular fecha de entrega
+    const tiempoMaximoDemora = await Examen.max("tiempoDemora", {
+      where: { id_examen: examenesSelectedIdsArray },
+    });
+
+    if (!tiempoMaximoDemora) {
+      return res.status(400).send("No se pudo calcular el tiempo de demora.");
+    }
+
+    const fechaEntrega = sumarDias(new Date(), tiempoMaximoDemora);
+
+    // Crear la orden de trabajo
+    const nuevaOrden = await OrdenTrabajo.create({
+      id_Paciente: id_paciente,
+      estado,
+      dni: dni_paciente,
+      Fecha_Creacion: new Date(),
+      Fecha_Entrega: fechaEntrega,
+    });
+
+    console.log(`Orden creada con ID: ${nuevaOrden.id_Orden}`);
+
+    // Asociar exámenes a la orden
+    for (const examenId of examenesSelectedIdsArray) {
+      await OrdenesExamenes.create({
+        id_Orden: nuevaOrden.id_Orden,
+        id_examen: examenId,
       });
-  
-      if (!tiempoMaximoDemora) {
-        return res.status(400).send("No se pudo calcular el tiempo de demora.");
-      }
-  
-      const fechaEntrega = sumarDias(new Date(), tiempoMaximoDemora);
-  
-      // Crear la orden de trabajo
-      const nuevaOrden = await OrdenTrabajo.create({
-        id_Paciente: id_paciente,
-        estado,
-        dni: dni_paciente,
-        Fecha_Creacion: new Date(),
-        Fecha_Entrega: fechaEntrega,
-      });
-  
-      console.log(`Orden creada con ID: ${nuevaOrden.id_Orden}`);
-  
-      // Asociar exámenes a la orden
-      for (const examenId of examenesSelectedIdsArray) {
-        await OrdenesExamenes.create({
+    }
+
+    // Manejar tipos de muestra y sus estados
+    if (tipos_muestra) {
+      const tiposMuestraArray = Array.isArray(tipos_muestra)
+        ? tipos_muestra
+        : [tipos_muestra];
+
+      for (const tipoMuestra of tiposMuestraArray) {
+        const idTipoMuestra = await obtenerIdTipoMuestra(tipoMuestra.trim());
+        if (!idTipoMuestra) continue;
+
+        const estadoMuestraKey = `estado_muestra_${tipoMuestra.trim()}`;
+        const estadoMuestra = rest[estadoMuestraKey];
+
+        if (!estadoMuestra) {
+          return res
+            .status(400)
+            .send(
+              `Debe seleccionar un estado para el tipo de muestra: ${tipoMuestra}`
+            );
+        }
+
+        await Muestra.create({
           id_Orden: nuevaOrden.id_Orden,
-          id_examen: examenId,
+          id_Paciente: id_paciente,
+          idTipoMuestra,
+          Fecha_Recepcion: new Date(),
+          estado: estadoMuestra,
         });
       }
-  
-      // Manejar tipos de muestra y sus estados
-      if (tipos_muestra) {
-        const tiposMuestraArray = Array.isArray(tipos_muestra) ? tipos_muestra : [tipos_muestra];
-  
-        for (const tipoMuestra of tiposMuestraArray) {
-          const idTipoMuestra = await obtenerIdTipoMuestra(tipoMuestra.trim());
-          if (!idTipoMuestra) continue;
-  
-          const estadoMuestraKey = `estado_muestra_${tipoMuestra.trim()}`;
-          const estadoMuestra = rest[estadoMuestraKey];
-  
-          if (!estadoMuestra) {
-            return res.status(400).send(`Debe seleccionar un estado para el tipo de muestra: ${tipoMuestra}`);
-          }
-  
-          await Muestra.create({
-            id_Orden: nuevaOrden.id_Orden,
-            id_Paciente: id_paciente,
-            idTipoMuestra,
-            Fecha_Recepcion: new Date(),
-            estado: estadoMuestra,
-          });
-        }
-      } else {
-        console.warn("No se seleccionaron tipos de muestra.");
-      }
-  
-      // Registrar auditoría
-      await auditoriaController.registrar(
-        usuarioId,
-        "Generación de Orden de Trabajo",
-        `Generación de una nueva orden con ID: ${nuevaOrden.id_Orden}`
-      );
-  
-      res.redirect(`/tecnico?success=Orden generada con éxito.`);
-    } catch (error) {
-      console.error("Error al procesar el formulario:", error);
-      res.status(500).send("Error al procesar el formulario.");
+    } else {
+      console.warn("No se seleccionaron tipos de muestra.");
     }
-  });
-  
+
+    // Registrar auditoría
+    await auditoriaController.registrar(
+      usuarioId,
+      "Generación de Orden de Trabajo",
+      `Generación de una nueva orden con ID: ${nuevaOrden.id_Orden}`
+    );
+
+    res.redirect(`/tecnico?success=Orden generada con éxito.`);
+  } catch (error) {
+    console.error("Error al procesar el formulario:", error);
+    res.status(500).send("Error al procesar el formulario.");
+  }
+});
 
 // Endpoint para ver las muestras de una orden
 router.get("/muestras/ver/:id_Orden", async (req, res) => {
@@ -276,6 +285,7 @@ router.get("/muestras/ver/:id_Orden", async (req, res) => {
 // Endpoint para actualizar el estado de todas las muestras de una orden a Pre-Informe
 router.post("/muestras/preinformar/:id_Orden", async (req, res) => {
   const { id_Orden } = req.params;
+  const usuarioId = req.user.dataValues.id_Usuario;
 
   try {
     // Verificar si ya están en estado Pre-Informe
@@ -312,6 +322,13 @@ router.post("/muestras/preinformar/:id_Orden", async (req, res) => {
     );
 
     if (updatedRows > 0) {
+      // Registrar auditoría para la actualización
+      await auditoriaController.registrar(
+        usuarioId,
+        "Actualizar Muestras a Pre-Informe",
+        `Se actualizaron ${updatedRows} muestras de la orden ${id_Orden} a estado Pre-Informe.`
+      );
+
       // Redirigir a la vista con un mensaje de éxito
       return res.render("ver-muestras", {
         muestras: await Muestra.findAll({
@@ -431,6 +448,8 @@ router.get("/registrarResultados/:id_Orden", async (req, res) => {
 router.post("/registrarResultados", async (req, res) => {
   const { idOrden, ...campos } = req.body;
   const user = req.user;
+  const usuarioId = req.user.dataValues.id_Usuario;
+
   const rol = res.locals.rol;
 
   let transaction;
@@ -478,6 +497,11 @@ router.post("/registrarResultados", async (req, res) => {
               transaction,
             }
           );
+          await auditoriaController.registrar(
+            user.idUsuario,
+            "Actualizar Resultado",
+            `Resultado actualizado para la determinación ${idDeterminacion} de la orden ${idOrden}`
+          );
         } else {
           // Crear un nuevo resultado
           await sequelize.query(
@@ -496,6 +520,11 @@ router.post("/registrarResultados", async (req, res) => {
               transaction,
             }
           );
+          await auditoriaController.registrar(
+            user.idUsuario,
+            "Crear Resultado",
+            `Nuevo resultado creado para la determinación ${idDeterminacion} de la orden ${idOrden}`
+          );
         }
       }
     }
@@ -513,7 +542,12 @@ router.post("/registrarResultados", async (req, res) => {
         transaction,
       }
     );
-
+    // Registrar auditoría para el cambio de estado de la orden
+    await auditoriaController.registrar(
+      user.idUsuario,
+      "Actualizar Estado de Orden",
+      `Estado de la orden ${idOrden} actualizado a 'Para Validar'`
+    );
     // Confirmar transacción
     await transaction.commit();
 
@@ -927,11 +961,9 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 50, 50, { width: 80 });
     }
-    doc
-      .fontSize(16)
-      .text("Informe de Resultados de Laboratorio", 150, 60, {
-        align: "center",
-      });
+    doc.fontSize(16).text("Informe de Resultados de Laboratorio", 150, 60, {
+      align: "center",
+    });
     doc.moveDown();
     doc.lineWidth(1).moveTo(50, 120).lineTo(550, 120).stroke();
 
