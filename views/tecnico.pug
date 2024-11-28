@@ -2,61 +2,187 @@ extends layout
 
 block content
   head
-    title Tecnico
+    title Técnico
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css")
+    link(href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet")
+    script(src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js" defer)
     script.
-      // JavaScript para ocultar el mensaje de éxito después de 5 segundos
       document.addEventListener("DOMContentLoaded", () => {
-        const successAlert = document.querySelector(".alert-success");
-        if (successAlert) {
-          setTimeout(() => {
-            successAlert.style.display = "none";
-          }, 5000); // 5000 milisegundos = 5 segundos
+        // Comprobar si Chart.js se ha cargado correctamente
+        if (typeof Chart === "undefined") {
+          console.error("Chart.js no se ha cargado correctamente");
+          return;
         }
+
+        console.log("Chart.js cargado con éxito");
+
+        const chartData = [
+          {
+            canvasId: "chartRevenue",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [200, 300, 250, 400, 450],
+            borderColor: "#4CAF50",
+            backgroundColor: "#4CAF5033",
+          },
+          {
+            canvasId: "chartCustomers",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [50, 60, 70, 70, 90],
+            borderColor: "#2196F3",
+            backgroundColor: "#2196F333",
+          },
+          {
+            canvasId: "chartOrders",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [10, 20, 15, 25, 30],
+            borderColor: "#FF5722",
+            backgroundColor: "#FF572233",
+          },
+          {
+            canvasId: "chartPending",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [15, 30, 20, 10, 5],
+            borderColor: "#17a2b8",
+            backgroundColor: "#17a2b833",
+          },
+          {
+            canvasId: "chartExams",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [5, 10, 15, 20, 25],
+            borderColor: "#007bff",
+            backgroundColor: "#007bff33",
+          },
+          {
+            canvasId: "chartReference",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [30, 20, 25, 15, 10],
+            borderColor: "#dc3545",
+            backgroundColor: "#dc354533",
+          },
+        ];
+
+        // Renderizar gráficos dinámicamente
+        chartData.forEach((chart) => {
+          const canvas = document.getElementById(chart.canvasId);
+          if (canvas) {
+            new Chart(canvas.getContext("2d"), {
+              type: "line",
+              data: {
+                labels: chart.labels,
+                datasets: [
+                  {
+                    data: chart.data,
+                    borderColor: chart.borderColor,
+                    backgroundColor: chart.backgroundColor,
+                    tension: 0.4,
+                    fill: true,
+                  },
+                ],
+              },
+              options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } },
+              },
+            });
+            console.log(`Gráfico renderizado: ${chart.canvasId}`);
+          } else {
+            console.error(`Canvas no encontrado: ${chart.canvasId}`);
+          }
+        });
       });
+    style.
+      body {
+        background-color: #f8f9fa;
+      }
+      .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+      .card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+      }
+      .icon {
+        font-size: 1.5rem;
+        color: #ffffff;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+      .text-success { color: #28a745 !important; }
+      .text-danger { color: #dc3545 !important; }
+      .text-warning { color: #ffc107 !important; }
+      .text-primary { color: #007bff !important; }
+      .text-info { color: #17a2b8 !important; }
 
   body
-    .container
-      h1 Bienvenido #{nombreUsuario}
-      
-      // Mostrar mensaje de éxito (si existe en la query string)
+    .container.mt-4
+      h1.text-center.mb-4 Bienvenido #{nombreUsuario}
+
+      // Mensaje de éxito
       if query.success 
-        .alert.alert-success.mt-3= query.success
+        .alert.alert-success.mt-3.text-center= query.success
 
-      .row
-        .col-lg-12
-          h2 Paciente
-          a(href="/buscar-paciente" class="btn btn-primary btn-block mt-3") Registrar/Buscar Paciente
+      // Tarjetas con gráficos dinámicos
+      .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4
+        // Tarjeta genérica: Ingresos
+        .col
+          .card.bg-light.text-dark.position-relative
+            i.icon.bi.bi-cash-coin.bg-success.p-2.rounded-circle
+            .card-body.text-center
+              h5.card-title Ingresos
+              h2.text-success $278,600
+              canvas#chartRevenue(width="300" height="100")
+              p.mt-2.text-muted +6.1% desde la semana pasada
 
-      .row
-        .col-lg-12
-          h2 Órdenes
-          a(href="/orden/generacion-orden" class="btn btn-success btn-block mt-3") Generar Orden
-        .col-lg-12
-          a(href="/BuscarOrdenes/ordenes" class="btn btn-primary btn-block mt-3") Actualizar Orden
-        .col-lg-12
-          a(href="/ordenesInformadas" class="btn btn-info btn-block mt-3") Ver Órdenes Informadas  
+        // Tarjeta genérica: Nuevos Pacientes
+        .col
+          .card.bg-light.text-dark.position-relative
+            i.icon.bi.bi-person-plus.bg-primary.p-2.rounded-circle
+            .card-body.text-center
+              h5.card-title Nuevos Pacientes
+              h2.text-primary 81%
+              canvas#chartCustomers(width="300" height="100")
+              p.mt-2.text-muted +5.1% desde la semana pasada
 
-      .row
-        .col-lg-12
-           h2 Muestras de ordenes pendientes
-           a(href="/ordenesAnalitica" class="btn btn-success btn-block mt-3") A analizar
+        // Tarjeta genérica: Órdenes Generadas
+        .col
+          .card.bg-light.text-dark.position-relative
+            i.icon.bi.bi-file-earmark-medical.bg-warning.p-2.rounded-circle
+            .card-body.text-center
+              h5.card-title Órdenes Generadas
+              h2.text-warning 301
+              canvas#chartOrders(width="300" height="100")
+              p.mt-2.text-muted +3.2% desde la semana pasada
 
-      .row
-        .col-lg-12
-          h2 Exámenes
-          a(href="/examen/crear-examen" class="btn btn-success btn-block mt-3") Generar Examen
-        .col-lg-12
-          a(href="/modificar-examen/buscar-modificar-examen" class="btn btn-primary btn-block mt-3") Actualizar Examen
+        // Tarjeta genérica: Análisis Pendientes
+        .col
+          .card.bg-light.text-dark.position-relative
+            i.icon.bi.bi-bezier.bg-info.p-2.rounded-circle
+            .card-body.text-center
+              h5.card-title Análisis Pendientes
+              h2.text-info 45
+              canvas#chartPending(width="300" height="100")
+              p.mt-2.text-muted -2% desde la semana pasada
 
-      .row
-        .col-lg-12
-          h2 Determinaciones
-          a(href="/determinacion/crear-determinacion" class="btn btn-success btn-block mt-3") Generar Determinación
-        .col-lg-12
+        // Tarjeta genérica: Exámenes Realizados
+        .col
+          .card.bg-light.text-dark.position-relative
+            i.icon.bi.bi-check-circle.bg-primary.p-2.rounded-circle
+            .card-body.text-center
+              h5.card-title Exámenes Realizados
+              h2.text-primary 120
+              canvas#chartExams(width="300" height="100")
+              p.mt-2.text-muted +8.3% desde la semana pasada
 
-      .row
-        .col-lg-12
-          h2 Valores de Referencia
-          a(href="/valoresreferencia/crear-valores" class="btn btn-success btn-block mt-3") Generar Valor de Referencia
-        .col-lg-12
-          a(href="/buscar-valores/buscar-valores-referencia" class="btn btn-primary btn-block mt-3") Actualizar Valor de Referencia
+        // Tarjeta genérica: Valores Referenciales
+        .col
+          .card.bg-light.text-dark.position-relative
+            i.icon.bi.bi-clipboard-data.bg-danger.p-2.rounded-circle
+            .card-body.text-center
+              h5.card-title Valores Referenciales
+              h2.text-danger 57%
+              canvas#chartReference(width="300" height="100")
+              p.mt-2.text-muted -1.4% desde la semana pasada

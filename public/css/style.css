@@ -289,3 +289,21 @@ body {
 .resultado.selected {
   background-color: #e0e0e0; /* Fondo gris más oscuro cuando está seleccionado */
 }
+
+.sidebar::-webkit-scrollbar {
+  width: 8px; /* Ancho de la barra de desplazamiento */
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #343a40; /* Fondo del track */
+  border-radius: 10px; /* Bordes redondeados */
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #6c757d; /* Color del pulgar (thumb) */
+  border-radius: 10px; /* Bordes redondeados */
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd; /* Color del pulgar al pasar el mouse */
+}

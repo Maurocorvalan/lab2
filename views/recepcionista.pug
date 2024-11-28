@@ -3,9 +3,73 @@ extends layout
 block content
   head
     title Recepcionista
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css")
+    link(href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet")
+    script(src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js" defer)
     script.
-      // JavaScript para ocultar el mensaje de éxito después de 5 segundos
       document.addEventListener("DOMContentLoaded", () => {
+        // Verificar que Chart.js se cargó correctamente
+        if (typeof Chart === "undefined") {
+          console.error("Chart.js no se cargó correctamente");
+          return;
+        }
+
+        console.log("Chart.js cargado con éxito");
+
+        const chartData = [
+          {
+            canvasId: "chartPatients",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [50, 60, 70, 80, 100],
+            borderColor: "#2196F3",
+            backgroundColor: "#2196F333",
+          },
+          {
+            canvasId: "chartOrders",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [20, 25, 35, 50, 60],
+            borderColor: "#FF5722",
+            backgroundColor: "#FF572233",
+          },
+          {
+            canvasId: "chartRevenue",
+            labels: ["L", "M", "X", "J", "V"],
+            data: [200, 300, 250, 400, 450],
+            borderColor: "#4CAF50",
+            backgroundColor: "#4CAF5033",
+          },
+        ];
+
+        // Renderizar gráficos dinámicamente
+        chartData.forEach((chart) => {
+          const canvas = document.getElementById(chart.canvasId);
+          if (canvas) {
+            new Chart(canvas.getContext("2d"), {
+              type: "line",
+              data: {
+                labels: chart.labels,
+                datasets: [
+                  {
+                    data: chart.data,
+                    borderColor: chart.borderColor,
+                    backgroundColor: chart.backgroundColor,
+                    tension: 0.4,
+                    fill: true,
+                  },
+                ],
+              },
+              options: {
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } },
+              },
+            });
+            console.log(`Gráfico renderizado: ${chart.canvasId}`);
+          } else {
+            console.error(`Canvas no encontrado: ${chart.canvasId}`);
+          }
+        });
+
+        // Ocultar el mensaje de éxito después de 5 segundos
         const successAlert = document.querySelector(".alert-success");
         if (successAlert) {
           setTimeout(() => {
@@ -13,25 +77,67 @@ block content
           }, 5000); // 5000 milisegundos = 5 segundos
         }
       });
+    style.
+      body {
+        background-color: #f8f9fa;
+      }
+      .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        position: relative;
+      }
+      .card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+      }
+      .icon {
+        font-size: 1.5rem;
+        color: #ffffff;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+      }
 
   body
     .container
       h1(class="mt-5 text-center") Bienvenido #{nombreUsuario}
-       if query.success 
-        .alert.alert-success.mt-3= query.success
 
-      // Paciente
-      .row
-        .col-lg-12
-          h2 Pacientes
-          a(href="/buscar-paciente" class="btn btn-primary btn-block mt-3") Registrar/Buscar Paciente
+      if query.success 
+        .alert.alert-success.mt-3.text-center= query.success
 
-      // Órdenes
-      .row
-        .col-lg-12
-          h2 Órdenes
-          a(href="/orden/generacion-orden" class="btn btn-primary btn-block mt-3") Generar Orden
 
-      .row
-        .col-lg-12
-          a(href="/BuscarOrdenes/ordenes" class="btn btn-primary btn-block mt-3") Actualizar Orden
+      .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4.mt-5
+        .col
+          .card.bg-light.text-dark
+            i.icon.bi.bi-people.bg-primary
+            .card-body.text-center
+              h5.card-title Pacientes
+              h2.text-primary 120
+              canvas#chartPatients(width="300" height="100")
+              p.mt-2.text-muted +4.3% desde la semana pasada
+
+        .col
+          .card.bg-light.text-dark
+            i.icon.bi.bi-file-earmark-medical.bg-warning
+            .card-body.text-center
+              h5.card-title Órdenes Generadas
+              h2.text-warning 301
+              canvas#chartOrders(width="300" height="100")
+              p.mt-2.text-muted +3.2% desde la semana pasada
+
+        .col
+          .card.bg-light.text-dark
+            i.icon.bi.bi-cash-coin.bg-success
+            .card-body.text-center
+              h5.card-title Ingresos
+              h2.text-success $278,600
+              canvas#chartRevenue(width="300" height="100")
+              p.mt-2.text-muted +6.1% desde la semana pasada

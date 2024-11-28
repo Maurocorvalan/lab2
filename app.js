@@ -122,7 +122,8 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id_Usuario, done) => {
   try {
     const user = await User.findByPk(id_Usuario, {
-      attributes: ["id_Usuario", "correo_electronico", "rol", "nombre_usuario", "urlFoto"], // Incluye correo electrónico
+      attributes: ["id_Usuario", "correo_electronico", "rol", "nombre_usuario", "urlFoto", "password"], // Incluye correo electrónico
+      
     });
     if (!user) {
       done(null, false);
@@ -430,7 +431,7 @@ app.get("/admin/actualizarUsuarioAdm", async (req, res) => {
               { correo_electronico: { [Op.like]: `%${nombre}%` } },
             ],
           },
-          attributes: ["id_Usuario", "nombre_usuario", "correo_electronico", "rol", "urlFoto"], // Incluye la URL de la foto
+          attributes: ["id_Usuario", "nombre_usuario", "correo_electronico", "rol", "urlFoto", "password"], // Incluye la URL de la foto
         });
 
         return res.json({ usuarios }); // Devuelve los resultados como JSON
@@ -632,7 +633,6 @@ app.post("/cambiar-contrasena", (req, res) => {
     contrasenaCambiada: true,
   });
 });
-
 // Sincronización de modelos con la base de datos y arranque del servidor en el puerto 3000
 sequelize
   .sync()
