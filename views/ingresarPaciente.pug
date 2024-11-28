@@ -16,50 +16,57 @@ block content
           .form-group
             label(for="nombre") Nombre:
             input#nombre.form-control(type="text" name="nombre", value=`${paciente ? paciente.nombre : ''}`, required)
+            div.invalid-feedback El nombre solo puede contener letras y espacios.
 
           .form-group
             label(for="apellido") Apellido:
             input#apellido.form-control(type="text" name="apellido", value=`${paciente ? paciente.apellido : ''}`, required)
+            div.invalid-feedback El apellido solo puede contener letras y espacios.
 
           .form-group
             label(for="dni") DNI:
             input#dni.form-control(type="text" name="dni", value=`${paciente ? paciente.dni : ''}`, required)
+            div.invalid-feedback El DNI debe contener solo números.
 
           .form-group
             label(for="fecha_nacimiento") Fecha de Nacimiento:
-            input#fecha_nacimiento.form-control(type="date" name="fecha_nacimiento", value=fechaNacimiento, required)
+            input#fecha_nacimiento.form-control(type="date" name="fecha_nacimiento", value=fechaNacimiento, required min="1900-01-01" max="")
+            div.invalid-feedback La fecha de nacimiento debe estar entre 01/01/1900 y la fecha actual.
 
           .form-group
             label(for="genero") Género:
             select#genero.form-control(name="genero", required)
               option(value="femenino", selected=(paciente && paciente.genero.toUpperCase() === "F")) Femenino
               option(value="masculino", selected=(paciente && paciente.genero.toUpperCase() === "M")) Masculino
+            div.invalid-feedback Por favor seleccione un género.
 
-          // Campo de embarazo, inicialmente oculto si el género es masculino
           .form-group#embarazo-group(style="display: none;")
             label(for="embarazo") ¿Embarazo?
             select#embarazo.form-control(name="embarazo", required)
               option(value=0, selected=(paciente && paciente.embarazo === 0)) No
               option(value=1, selected=(paciente && paciente.embarazo === 1)) Sí
 
-          // Input oculto para manejar el valor de embarazo automáticamente si género es masculino
           input#embarazo-hidden(type="hidden" name="embarazo" value="0")
 
           .form-group
             label(for="direccion") Dirección:
-            input#direccion.form-control(type="text" name="direccion", value=`${paciente ? paciente.direccion : '' }`)
+            input#direccion.form-control(type="text" name="direccion", value=`${paciente ? paciente.direccion : ''}`)
+            div.invalid-feedback La dirección no puede estar vacía.
 
           .form-group
             label(for="telefono") Teléfono:
             input#telefono.form-control(type="text" name="telefono", value=`${paciente ? paciente.telefono : ''}`)
+            div.invalid-feedback El teléfono debe contener solo números y un formato válido.
 
           .form-group
             label(for="email") Correo Electrónico:
             input#email.form-control(type="email" name="email", value=`${paciente ? paciente.email : ''}`)
+            div.invalid-feedback Ingrese un correo electrónico válido.
 
           .form-group
             label(for="diagnostico") Diagnóstico (presuntivo o confirmado):
             input#diagnostico.form-control(type="text" name="diagnostico", value=`${paciente ? paciente.diagnostico : ''}`)
+            div.invalid-feedback El diagnóstico solo puede contener letras y espacios.
 
           button#confirmar-btn.btn.btn-primary(type="button") Confirmar Datos
 
@@ -90,9 +97,6 @@ block content
               p
                 b Género: 
                 span#confirm-genero
-              p#confirm-embarazo-group
-                b Embarazo: 
-                span#confirm-embarazo
               p
                 b Dirección: 
                 span#confirm-direccion
@@ -114,42 +118,102 @@ block content
         const generoSelect = $('#genero');
         const embarazoGroup = $('#embarazo-group');
         const embarazoHidden = $('#embarazo-hidden');
+        const regexText = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$/;
+        const regexDni = /^\d+$/;
+        const regexTelefono = /^[0-9]{7,15}$/;
+        const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Función para bloquear fechas inválidas
+        const setFechaNacimientoLimits = () => {
+          const today = new Date().toISOString().split('T')[0]; // Fecha actual
+          $('#fecha_nacimiento').attr('min', '1900-01-01');
+          $('#fecha_nacimiento').attr('max', today);
+        };
 
         // Función para mostrar/ocultar el campo de embarazo
         const toggleEmbarazoField = () => {
           const selectedGenero = generoSelect.val();
           if (selectedGenero === 'femenino') {
             embarazoGroup.show();
-            embarazoHidden.prop('disabled', true); // Deshabilita el campo oculto
+            embarazoHidden.prop('disabled', true);
           } else {
             embarazoGroup.hide();
-            embarazoHidden.prop('disabled', false); // Habilita el campo oculto
+            embarazoHidden.prop('disabled', false);
+          }
+        };
+
+        // Validar campos individuales
+        const validateField = (input, regex, message) => {
+          if (!regex.test(input.val().trim())) {
+            input.addClass('is-invalid');
+            input.next('.invalid-feedback').text(message).show();
+            return false;
+          } else {
+            input.removeClass('is-invalid');
+            input.next('.invalid-feedback').hide();
+            return true;
+          }
+        };
+
+        // Validar fecha de nacimiento
+        const validateFechaNacimiento = () => {
+          const fechaNacimiento = $('#fecha_nacimiento').val();
+          const minDate = new Date('1900-01-01');
+          const maxDate = new Date();
+          const fechaIngresada = new Date(fechaNacimiento);
+          if (!fechaNacimiento || fechaIngresada < minDate || fechaIngresada > maxDate) {
+            $('#fecha_nacimiento').addClass('is-invalid');
+            $('#fecha_nacimiento').next('.invalid-feedback').text('La fecha de nacimiento debe estar entre 01/01/1900 y la fecha actual.').show();
+            return false;
+          } else {
+            $('#fecha_nacimiento').removeClass('is-invalid');
+            $('#fecha_nacimiento').next('.invalid-feedback').hide();
+            return true;
           }
         };
 
         // Evento para cambiar la visibilidad del campo de embarazo
         generoSelect.on('change', toggleEmbarazoField);
-
-        // Inicializar el estado correcto en la carga
         toggleEmbarazoField();
 
-        // Botón de confirmar
+        // Configurar límites de fecha
+        setFechaNacimientoLimits();
+
+        // Validar antes de mostrar el modal
         $('#confirmar-btn').on('click', function () {
-          $('#confirm-nombre').text($('#nombre').val());
-          $('#confirm-apellido').text($('#apellido').val());
-          $('#confirm-dni').text($('#dni').val());
-          $('#confirm-fecha_nacimiento').text($('#fecha_nacimiento').val());
-          $('#confirm-genero').text($('#genero').val());
-          if ($('#genero').val() === 'femenino') {
-            $('#confirm-embarazo-group').show();
-            $('#confirm-embarazo').text($('#embarazo').val() === '1' ? 'Sí' : 'No');
+          const isNombreValid = validateField($('#nombre'), regexText, 'El nombre solo puede contener letras y espacios.');
+          const isApellidoValid = validateField($('#apellido'), regexText, 'El apellido solo puede contener letras y espacios.');
+          const isDniValid = validateField($('#dni'), regexDni, 'El DNI debe contener solo números.');
+          const isFechaNacimientoValid = validateFechaNacimiento();
+          const isGeneroValid = $('#genero').val() !== null;
+          const isDireccionValid = $('#direccion').val().trim() !== '';
+          const isTelefonoValid = validateField($('#telefono'), regexTelefono, 'El teléfono debe contener solo números.');
+          const isEmailValid = validateField($('#email'), regexEmail, 'Ingrese un correo electrónico válido.');
+          const isDiagnosticoValid = validateField($('#diagnostico'), regexText, 'El diagnóstico solo puede contener letras y espacios.');
+
+          if (
+            isNombreValid &&
+            isApellidoValid &&
+            isDniValid &&
+            isFechaNacimientoValid &&
+            isGeneroValid &&
+            isDireccionValid &&
+            isTelefonoValid &&
+            isEmailValid &&
+            isDiagnosticoValid
+          ) {
+            $('#confirm-nombre').text($('#nombre').val());
+            $('#confirm-apellido').text($('#apellido').val());
+            $('#confirm-dni').text($('#dni').val());
+            $('#confirm-fecha_nacimiento').text($('#fecha_nacimiento').val());
+            $('#confirm-genero').text($('#genero').val());
+            $('#confirm-direccion').text($('#direccion').val());
+            $('#confirm-telefono').text($('#telefono').val());
+            $('#confirm-email').text($('#email').val());
+            $('#confirm-diagnostico').text($('#diagnostico').val());
+            $('#confirmModal').modal('show');
           } else {
-            $('#confirm-embarazo-group').hide();
+            alert('Por favor corrija los campos inválidos antes de continuar.');
           }
-          $('#confirm-direccion').text($('#direccion').val());
-          $('#confirm-telefono').text($('#telefono').val());
-          $('#confirm-email').text($('#email').val());
-          $('#confirm-diagnostico').text($('#diagnostico').val());
-          $('#confirmModal').modal('show');
         });
       });

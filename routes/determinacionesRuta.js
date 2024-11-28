@@ -41,16 +41,13 @@ router.get("/crear-determinacion", async (req, res) => {
 router.post("/crear-determinacion/determinaciones", async (req, res) => {
   try {
     const { id_examen, determinaciones } = req.body;
-
     // Validar que el examen existe
     const examen = await Examen.findByPk(id_examen);
     if (!examen) {
       return res.status(404).json({ error: "Examen no encontrado." });
     }
-
     const nuevasDeterminaciones = [];
     const actualizadasDeterminaciones = [];
-
     for (const det of determinaciones) {
       const unidadMedida = await UnidadMedida.findByPk(det.Unidad_Medida);
       if (!unidadMedida) {
@@ -86,6 +83,7 @@ router.post("/crear-determinacion/determinaciones", async (req, res) => {
       });
 
       nuevasDeterminaciones.push(nuevaDeterminacion);
+      console.log(nuevasDeterminaciones)
     }
 
     res.status(201).json({

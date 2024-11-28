@@ -65,6 +65,7 @@ app.use(
 // Middleware para body parsing
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(express.json());
 
 // Configuración de express-session (habilita sesiones)
 app.use(
@@ -197,11 +198,7 @@ app.use(
   checkRole(["tecnico", "bioquimico", "admin"]),
   modificarExamenRuta
 );
-app.use(
-  "/modificar-determinacion",
-  checkRole(["tecnico", "bioquimico", "admin"]),
-  modificarDeterminacionRuta
-);
+
 app.use(
   "/buscar-valores",
   checkRole(["tecnico", "bioquimico", "admin"]),
