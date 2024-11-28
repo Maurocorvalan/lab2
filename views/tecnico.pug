@@ -123,7 +123,8 @@ block content
       // Mensaje de éxito
       if query.success 
         .alert.alert-success.mt-3.text-center= query.success
-
+      if success
+        div.alert.alert-success.mt-3.text-center= success
       // Tarjetas con gráficos dinámicos
       .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4
         // Tarjeta genérica: Ingresos

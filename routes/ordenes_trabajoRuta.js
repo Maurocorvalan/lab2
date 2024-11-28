@@ -138,6 +138,8 @@ router.get("/generacion-orden/:dni?", async (req, res) => {
 
 // Ruta para procesar la generación de ordenrouter.post("/generacion-orden", async (req, res) => {
 router.post("/generacion-orden", async (req, res) => {
+  const rol = res.locals.rol;
+
   try {
     const {
       estado,
@@ -246,7 +248,7 @@ router.post("/generacion-orden", async (req, res) => {
       `Generación de una nueva orden con ID: ${nuevaOrden.id_Orden}`
     );
 
-    res.redirect(`/tecnico?success=Orden generada con éxito.`);
+    res.render(`${rol}`, { success: "Orden generada con exito" });
   } catch (error) {
     console.error("Error al procesar el formulario:", error);
     res.status(500).send("Error al procesar el formulario.");
@@ -370,6 +372,30 @@ router.post("/muestras/preinformar/:id_Orden", async (req, res) => {
       .send("Ocurrió un error al actualizar el estado de las muestras.");
   }
 });
+router.post("/muestras/cambiar-estado/:idMuestra", async (req, res) => {
+  const { idMuestra } = req.params;
+  const { nuevoEstado } = req.body;
+
+  try {
+    const muestra = await Muestra.findByPk(idMuestra);
+    if (!muestra) {
+      return res.status(404).json({ error: "Muestra no encontrada." });
+    }
+
+    muestra.estado = nuevoEstado;
+    await muestra.save();
+
+    res.json({
+      success: true,
+      message: `Estado de la muestra ${idMuestra} actualizado a "${nuevoEstado}".`,
+    });
+  } catch (error) {
+    console.error("Error al cambiar el estado de la muestra:", error);
+    res
+      .status(500)
+      .json({ error: "Error al cambiar el estado de la muestra." });
+  }
+});
 
 // Endpoint para obtener datos de "Pre Informe"
 // Ruta para renderizar la vista "registrarResultados"
@@ -451,7 +477,6 @@ router.post("/registrarResultados", async (req, res) => {
   const usuarioId = req.user.dataValues.id_Usuario;
 
   const rol = res.locals.rol;
-
   let transaction;
 
   try {
@@ -552,7 +577,7 @@ router.post("/registrarResultados", async (req, res) => {
     await transaction.commit();
 
     // Redirigir al usuario o enviar una respuesta
-    res.render(`/${rol}`, { success: "Resultados guardados" });
+    res.render(`${rol}`, { success: "Resultados guardados" });
   } catch (error) {
     console.error("Error al guardar los resultados:", error);
 
@@ -770,7 +795,7 @@ router.get("/validarResultados/:id_Orden", async (req, res) => {
 
 router.post("/confirmarValidacion", async (req, res) => {
   const { idOrden } = req.body;
-
+  const rol = res.locals.rol;
   let transaction;
 
   try {
@@ -823,9 +848,7 @@ router.post("/confirmarValidacion", async (req, res) => {
     await transaction.commit();
 
     // Enviar respuesta al cliente
-    res
-      .status(200)
-      .send("Validación confirmada y estados actualizados correctamente.");
+    res.render(`${rol}`, { success: "Validacion confirmada" });
   } catch (error) {
     console.error("Error al confirmar validación:", error);
 
@@ -995,35 +1018,43 @@ router.get("/generarPDF/:idOrden", async (req, res) => {
 
     // Recorrer cada examen y añadir al PDF
     for (const [nombreExamen, determinaciones] of Object.entries(examenes)) {
+      // Encabezado para cada examen
       doc
         .fontSize(14)
         .fillColor("#333333")
-        .text(nombreExamen, { underline: true });
+        .text(`Examen: ${nombreExamen}`, { underline: true });
       doc.moveDown();
+    
+      // Añadir cabecera de las columnas
+      doc
+        .fontSize(10)
+        .text("Determinación", 50, doc.y, { continued: true })
+        .text("Resultado", 200, doc.y, { continued: true })
+        .text("Valores Referencia", 350, doc.y);
+      doc.moveDown(0.5);
+    
+      // Línea divisoria
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown();
+      const rowHeight = 15; // Altura fija para cada fila
 
+      // Detalles de las determinaciones
       determinaciones.forEach((determinacion) => {
-        const columna1 = `Determinación: ${determinacion.Nombre_Determinacion}`;
-        const columna2 = `Resultado: ${determinacion.valor_resultado} ${determinacion.unidad_resultado}`;
-        const columna3 = `Valores Ref.: ${determinacion.Valor_Referencia_Minimo} - ${determinacion.Valor_Referencia_Maximo}`;
-
-        doc.fontSize(12).text(columna1, 50, doc.y, { continued: true });
-        doc.text(` | ${columna2}`, { continued: true });
-        doc.text(` | ${columna3}`);
-        doc.moveDown();
+        doc
+          .fontSize(8)
+          .text(
+            `${determinacion.Nombre_Determinacion} ................................................ ${determinacion.valor_resultado} ${determinacion.unidad_resultado} ................................................ Min:${determinacion.Valor_Referencia_Minimo} - Max: ${determinacion.Valor_Referencia_Maximo}`,
+            50,
+            doc.y
+          );
+        doc.moveDown(0.5);
       });
-
-      doc.moveDown();
+      
+    
+      // Espaciado entre exámenes
+      doc.moveDown(4);
     }
 
-    // Pie de página
-    doc
-      .moveTo(50, doc.page.height - 50)
-      .lineTo(550, doc.page.height - 50)
-      .stroke();
-    doc.text("Firma: _________________________", 50, doc.page.height - 40);
-    doc.text("Médico Responsable", 50, doc.page.height - 25);
-
-    // Finalizar y cerrar el documento
     doc.end();
   } catch (error) {
     console.error("Error al generar el PDF:", error);

@@ -204,6 +204,11 @@ app.use(
   checkRole(["tecnico", "bioquimico", "admin"]),
   modificarValrefRuta
 );
+app.use(
+  "/buscar-valores",
+  checkRole(["tecnico", "bioquimico", "admin"]),
+  modificarDeterminacionRuta
+);
 app.use("/muestras", checkRole(["tecnico", "bioquimico", "admin", "recepcionista"]),muestrasRouter);
 
 // Ruta de inicio de sesión

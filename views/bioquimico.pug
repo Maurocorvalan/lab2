@@ -131,7 +131,8 @@ block content
       
       if query.success 
         .alert.alert-success.mt-3.text-center= query.success
-
+      if success
+        div.alert.alert-success.mt-3.text-center= success
       .row.row-cols-1.row-cols-md-2.row-cols-lg-3.g-4
         .col
           .card.bg-light.text-dark

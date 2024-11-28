@@ -168,7 +168,7 @@ html
           img(src=urlFoto alt="Foto de usuario")
         else
           img(src="/public/img/default-avatar.png" alt="Foto predeterminada")
-        h4 #{nombreUsuario}
+        h2 #{nombreUsuario}
       nav
         if rol === "recepcionista" || rol === "tecnico" || rol === "bioquimico" || rol === "admin"
           h4 Pacientes
@@ -187,13 +187,15 @@ html
           a(href="/ordenesInformadas")
             i.fas.fa-eye
             | Ver Órdenes Informadas
-        if rol === "bioquimico" || rol === "admin"
-          a(href="/pendientesAValidar")
-            i.fas.fa-tasks
-            | Pendientes a Validar
-          a(href="/ordenesAnalitica")
-            i.fas.fa-vials
-            | Analizar Órdenes Pendientes
+        if rol === "bioquimico" || rol === "admin" || "tecnico"
+         if rol === "bioquimico" || rol === "admin"
+            a(href="/pendientesAValidar")
+              i.fas.fa-tasks
+              | Pendientes a Validar
+         if rol === "bioquimico" || rol === "admin" || "tecnico"
+            a(href="/ordenesAnalitica")
+              i.fas.fa-vials
+              | Analizar Órdenes Pendientes
         if rol === "bioquimico" || rol === "tecnico" || rol === "admin"
           h4 Exámenes
           a(href="/examen/crear-examen")
